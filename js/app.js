@@ -2,8 +2,9 @@
 import { get, set, settings, favourites, putFile, getFile, IQAMA_DEFAULTS } from './store.js';
 import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS } from './prayer.js';
 import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH } from './data.js';
-import { player, play, toggle, next, stop, resetRatib } from './audio.js';
+import { player, play, toggle, next, stop, resetRatib, playAyah, nextAyah, prevAyah, setSpeed } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
+import { VoiceCounter, KEYWORDS, canRecognise, canListen } from './voice.js';
 
 // ================= themes =================
 
@@ -22,7 +23,7 @@ function applyTheme(id) {
 }
 applyTheme(get('theme', 'gold'));
 
-const view = document.getElementById('view');
+let view = document.getElementById('view');
 let cleanups = [];
 const onLeave = fn => cleanups.push(fn);
 
@@ -31,6 +32,10 @@ const onLeave = fn => cleanups.push(fn);
 function route() {
   cleanups.forEach(f => { try { f(); } catch { /* ignore */ } });
   cleanups = [];
+  // fresh container each time so tap handlers from the previous screen don't pile up
+  const fresh = view.cloneNode(false);
+  view.replaceWith(fresh);
+  view = fresh;
   document.body.classList.remove('full');
   const parts = (location.hash || '#/today').slice(2).split('/');
   const page = parts[0] || 'today';
@@ -51,12 +56,50 @@ function requestLocation(force = false) {
   if ((askedLocation && !force) || !navigator.geolocation) return;
   askedLocation = true;
   navigator.geolocation.getCurrentPosition(p => {
-    set('lat', p.coords.latitude); set('lon', p.coords.longitude); set('hasLocation', true);
-    set('locTime', Date.now());
+    const { latitude: lat, longitude: lon, accuracy } = p.coords;
+    set('lat', lat); set('lon', lon); set('hasLocation', true);
+    set('locTime', Date.now()); set('locAccuracy', Math.round(accuracy || 0));
     if (force) toast('Location updated');
-    if ((location.hash || '#/today').startsWith('#/today')) route();
-  }, () => { if (force) toast('Location is off — allow it in Settings → Safari → Location'); },
-  { enableHighAccuracy: false, maximumAge: 30 * 60000, timeout: 15000 });
+    lookupAddress(lat, lon, force);
+    if (/^#\/(today|settings)/.test(location.hash || '#/today')) route();
+  }, () => { if (force) toast('Location is off — allow it in iPhone Settings → Privacy → Location Services → Safari Websites'); },
+  { enableHighAccuracy: true, maximumAge: 5 * 60000, timeout: 20000 });
+}
+
+const metresBetween = (a1, o1, a2, o2) => {
+  const r = Math.PI / 180, x = (o2 - o1) * r * Math.cos((a1 + a2) / 2 * r), y = (a2 - a1) * r;
+  return Math.hypot(x, y) * 6371000;
+};
+
+/** Street, area, city and country for your position (OpenStreetMap, needs internet). */
+async function lookupAddress(lat, lon, force = false) {
+  const old = get('address', null);
+  if (!force && old && metresBetween(old.lat, old.lon, lat, lon) < 100 && Date.now() - old.t < 7 * 86400000) return;
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}&zoom=18&addressdetails=1&accept-language=en`);
+    if (!r.ok) return;
+    const a = (await r.json()).address || {};
+    set('address', {
+      lat, lon, t: Date.now(),
+      street: [a.house_number, a.road || a.pedestrian || a.footway].filter(Boolean).join(' '),
+      area: a.neighbourhood || a.suburb || a.quarter || a.city_district || a.residential || '',
+      city: a.city || a.town || a.village || a.municipality || a.hamlet || '',
+      region: a.county || a.state_district || a.state || '',
+      country: a.country || '',
+    });
+    if (/^#\/(today|settings)/.test(location.hash || '#/today')) route();
+  } catch { /* offline — keep the last address */ }
+}
+
+/** Two lines: "Street, Area" and "City, Region, Country". */
+function addressLines() {
+  const a = get('address', null);
+  if (!settings.hasLocation) return ['Dubai (default)', 'Tap to use your location'];
+  if (!a) return ['Your location', `${settings.lat.toFixed(4)}, ${settings.lon.toFixed(4)}`];
+  const uniq = arr => arr.filter((x, i) => x && arr.indexOf(x) === i);
+  const l1 = uniq([a.street, a.area]).join(', ') || a.city || 'Your location';
+  const l2 = uniq([a.city, a.region, a.country]).join(', ');
+  return [l1, l2];
 }
 
 function today() {
@@ -80,6 +123,7 @@ function today() {
   };
   const loc = document.getElementById('loc');
   if (loc) loc.onclick = () => requestLocation(true);
+  view.addEventListener('click', e => { if (e.target.closest('[data-loc]')) requestLocation(true); });
   requestLocation();
 }
 
@@ -109,8 +153,8 @@ function todayHtml(now) {
     <div style="margin:6px 0 14px">
       <div class="hijri-ar ar" style="text-align:left">${h.ar}</div>
       <div class="gold">${h.en}</div>
-      <div class="dim small">${now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
-        · ${settings.hasLocation ? 'Your location' : 'Dubai'}</div>
+      <div class="dim small">${now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+      <button class="locline" data-loc="1">${ICON.pin}<span><span class="l1">${addressLines()[0]}</span><span class="l2">${addressLines()[1]}</span></span></button>
     </div>
     <div class="card hi">
       <div class="label gold">${cur ? 'Now' : 'Next prayer'}</div>
@@ -406,6 +450,14 @@ async function reader(args) {
     <div id="scroller"><div class="mushaf ${colours ? '' : 'nocol'}" id="mushaf" style="font-size:${size}px;line-height:2.1"><p class="dim" style="text-align:center">Loading…</p></div></div>
     <div class="rctrl">
       <button class="pill" id="rnext" hidden></button>
+      <div class="abar" id="abar" hidden>
+        <button class="iconbtn" id="aprev" aria-label="Previous ayah">${ICON.prev}</button>
+        <button class="iconbtn play" id="atoggle" aria-label="Play or pause">${ICON.pause}</button>
+        <button class="iconbtn" id="anext" aria-label="Next ayah">${ICON.next}</button>
+        <div class="ainfo" id="ainfo"></div>
+        <button class="pill" id="aspeed">1×</button>
+        <button class="iconbtn" id="astop" aria-label="Stop">${ICON.close}</button>
+      </div>
       <div class="bar">
         <button class="pill" id="rscroll"></button>
         <button class="pill" id="rsmall">A−</button>
@@ -435,7 +487,65 @@ async function reader(args) {
   $('rsmall').onclick = () => setSize(size - 3);
   $('rbig').onclick = () => setSize(size + 3);
   $('rfav').onclick = () => { const on = favourites.toggle(n); $('rfav').classList.toggle('filled', on); toast(on ? 'Added to favourites ★' : 'Removed from favourites'); };
-  $('rlisten').onclick = () => { play(n, { playlist: favMode ? favourites.all() : null }); toast(`Playing ${surahEn(n)} — ${reciterName(settings.reciter)}`); };
+  // ----- listening: verse highlight, pause, speed -----
+  const SPEED_STEPS = [0.75, 1, 1.25, 1.5, 2];
+  let fromAyah = 1, lastTouch = 0, lastHl = null, startedHere = false;
+  scroller.addEventListener('touchstart', () => { lastTouch = Date.now(); }, { passive: true });
+  $('rlisten').onclick = () => {
+    startedHere = true;
+    play(n, { playlist: favMode ? favourites.all() : null, ayah: fromAyah });
+    toast(`${reciterName(settings.reciter)} · ${surahEn(n)}${fromAyah > 1 ? ' from ayah ' + fromAyah : ''}`);
+  };
+  $('atoggle').onclick = toggle;
+  $('anext').onclick = nextAyah;
+  $('aprev').onclick = prevAyah;
+  $('astop').onclick = () => { stop(); startedHere = false; };
+  $('aspeed').onclick = () => {
+    const i = SPEED_STEPS.indexOf(player.speed);
+    setSpeed(SPEED_STEPS[(i + 1) % SPEED_STEPS.length]);
+  };
+  // Tap an ayah: play from it (or choose where "Listen" starts)
+  mushaf.addEventListener('click', e => {
+    const ay = e.target.closest('.ay'); if (!ay) return;
+    const a = Math.max(1, +ay.dataset.a);
+    if (player.current === n) { playAyah(n, a); return; }
+    fromAyah = a;
+    mushaf.querySelectorAll('.ay.sel').forEach(x => x.classList.remove('sel'));
+    ay.classList.add('sel');
+    $('rlisten').innerHTML = `${ICON.play} Listen from ${a}`;
+  });
+  const syncAudio = () => {
+    const mine = player.current === n;
+    const bar = $('abar'); if (!bar) return;
+    bar.hidden = !mine;
+    $('rlisten').hidden = mine;
+    if (!mine) {
+      if (lastHl) { lastHl.classList.remove('playing'); lastHl = null; }
+      // recitation moved on to the next surah: follow it
+      if (startedHere && player.current >= 1 && player.current <= 114 && player.playing) {
+        go(`#/read/${player.current}${favMode ? '/f' : ''}`);
+      }
+      return;
+    }
+    startedHere = true;
+    $('atoggle').innerHTML = player.playing ? ICON.pause : ICON.play;
+    $('aspeed').textContent = `${player.speed}×`;
+    $('ainfo').innerHTML = player.error ? `<span style="color:var(--near)">${player.error}</span>`
+      : `${player.ayah ? 'Ayah ' + player.ayah : 'Bismillah'} <span class="muted">/ ${player.count}</span>`;
+    const el = mushaf.querySelector(`.ay[data-a="${player.ayah}"]`);
+    if (el && el !== lastHl) {
+      if (lastHl) lastHl.classList.remove('playing');
+      el.classList.add('playing');
+      lastHl = el;
+      mushaf.querySelectorAll('.ay.sel').forEach(x => x.classList.remove('sel'));
+      // follow the recitation unless you're scrolling yourself
+      if (Date.now() - lastTouch > 4000 && !readerSpeed) {
+        const r = el.getBoundingClientRect(), sr = scroller.getBoundingClientRect();
+        scroller.scrollTo({ top: scroller.scrollTop + r.top - sr.top - sr.height * 0.3, behavior: 'smooth' });
+      }
+    }
+  };
+  onLeave(player.onChange(syncAudio));
   $('rcol').onclick = () => {
     sheet('Tajweed colours', `
       <div class="row" style="margin-bottom:10px"><span class="spacer">Show colours</span>
@@ -483,11 +593,14 @@ async function reader(args) {
     mushaf.innerHTML = '<p class="dim" style="text-align:center">Could not open this surah. Open Noor once while online so it can save the Quran text.</p>';
     return;
   }
-  if (saved && saved.surah === n && saved.frac > 0.001) {
+  if (player.current === n) {
+    syncAudio();
+  } else if (saved && saved.surah === n && saved.frac > 0.001) {
     requestAnimationFrame(() => { scroller.scrollTop = saved.frac * (scroller.scrollHeight - scroller.clientHeight); });
   } else {
     set('reader', { surah: n, frac: 0 });
   }
+  syncAudio();
 }
 
 // ================= Adhkar =================
@@ -643,6 +756,8 @@ function counter() {
       <button class="pill" id="creset">${ICON.reset} Reset</button>
       <button class="pill" id="csound"></button>
     </div>
+    <button class="pill listen" id="clisten">🎙 Listen &amp; count</button>
+    <div class="vstate" id="vstate" hidden><div class="vlevel"><i id="vlevel"></i></div><div class="small" id="vtext"></div></div>
     <div class="tiny muted" id="ctotal"></div></div>`;
   const $ = id => document.getElementById(id);
 
@@ -669,8 +784,57 @@ function counter() {
     }
     st.count++; st.total++;
     const hit = cur().target && st.count === cur().target;
-    if (st.sound || hit) beep(hit);
+    if (voice.active) {                         // no sounds while listening (the mic would hear them)
+      if (hit) { $('counter').classList.add('flash'); setTimeout(() => $('counter')?.classList.remove('flash'), 600); }
+      if (navigator.vibrate) navigator.vibrate(hit ? [60, 60, 60] : 15);
+    } else if (st.sound || hit) beep(hit);
     save(); draw();
+  };
+
+  // ----- hands-free: listen and count -----
+  const voice = new VoiceCounter({
+    keyword: () => KEYWORDS[st.index < 0 ? [0, 1, 2][Math.min(st.step, 2)] : st.index],
+    onCount: k => { for (let i = 0; i < k; i++) add(); },
+    onState: s => {
+      if (!$('vstate')) return;
+      $('vstate').hidden = !s.listening && !s.error;
+      $('clisten').classList.toggle('on', !!s.listening);
+      $('clisten').innerHTML = s.listening ? '■ Stop listening' : '🎙 Listen &amp; count';
+      if (s.level != null) $('vlevel').style.width = Math.round(s.level * 100) + '%';
+      $('vlevel').parentElement.hidden = s.mode !== 'pauses';
+      $('vtext').innerHTML = s.error ? `<span style="color:var(--near)">${s.error}</span>`
+        : s.mode === 'words' ? `Listening for <b class="goldl">${cur().en || 'the dhikr'}</b>${s.heard ? ` · <span class="ar dim">${s.heard}</span>` : ''}`
+        : s.speaking ? 'Hearing you…' : 'Listening — pause briefly after each one';
+    },
+  });
+  voice.gapMs = get('voiceGap', 300);
+  onLeave(() => voice.stop());
+  $('clisten').onclick = () => {
+    if (voice.active) { voice.stop(); return; }
+    if (!canListen && !canRecognise) { toast('This device can\'t listen from a web page'); return; }
+    const freeCount = cur().ar === '';
+    const mode = get('voiceMode', canRecognise ? 'words' : 'pauses');
+    sheet('Listen & count', `
+      <p class="note" style="margin-top:0">Say the dhikr out loud — Noor counts for you. Keep the phone near you.</p>
+      ${canRecognise && !freeCount ? `<button class="srow vopt ${mode === 'words' ? 'on' : ''}" style="width:100%" data-vm="words">
+        <span style="flex:1;text-align:left"><b>Recognise the words</b><br><span class="small dim">Hears "${cur().en}" itself. Arabic, needs internet.</span></span></button>` : ''}
+      <button class="srow vopt ${mode === 'pauses' || freeCount || !canRecognise ? 'on' : ''}" style="width:100%" data-vm="pauses">
+        <span style="flex:1;text-align:left"><b>Count each pause</b><br><span class="small dim">Counts one each time you stop briefly. Works offline, any dhikr.</span></span></button>
+      <div class="label" style="margin:14px 0 6px">Pause between repetitions</div>
+      <div class="seg">${[[200, 'Short'], [300, 'Normal'], [500, 'Long']].map(([v, l]) => `<button data-gap="${v}" class="${voice.gapMs === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <p class="tiny muted">Use "Short" if you recite quickly. Sounds are muted while listening.</p>`,
+    (e, close) => {
+      const g = e.target.closest('[data-gap]');
+      if (g) {
+        voice.gapMs = +g.dataset.gap; set('voiceGap', voice.gapMs);
+        g.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === g));
+        return;
+      }
+      const m = e.target.closest('[data-vm]'); if (!m) return;
+      set('voiceMode', m.dataset.vm);
+      close();
+      voice.start(m.dataset.vm);
+    });
   };
   const box = $('counter');
   box.addEventListener('click', e => { if (!e.target.closest('button')) add(); });
@@ -711,7 +875,8 @@ function settingsScreen() {
       <div class="set"><span class="lbl">Calculation</span><select id="method">${METHODS.map((m, k) => `<option value="${k}" ${k === s.method ? 'selected' : ''}>${m.name}</option>`).join('')}</select></div>
       <div class="set"><span class="lbl">Hanafi Asr (later)</span>${sw('hanafi', s.hanafi)}</div>
       <div class="set"><span class="lbl">Friday: UAE khutbah at 12:45</span>${sw('friday', s.friday)}</div>
-      <div class="set"><span class="lbl">Location<div class="tiny muted">${s.hasLocation ? `${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}` : 'Dubai (default)'}</div></span><button class="pill" id="loc">Update</button></div>
+      <div class="set"><span class="lbl">Location<div class="small">${addressLines()[0]}</div><div class="tiny muted">${addressLines()[1]}</div>
+        <div class="tiny muted">${s.hasLocation ? `${s.lat.toFixed(5)}, ${s.lon.toFixed(5)} · ±${get('locAccuracy', 0)} m` : ''}</div></span><button class="pill" id="loc">Update</button></div>
     </div>
     <div class="label" style="margin:16px 4px 6px">Iqama — minutes after adhan</div>
     <div class="card">${names.map((n, k) => stepper('iq' + k, n, iq[k] + ' min')).join('')}</div>
@@ -724,7 +889,7 @@ function settingsScreen() {
       Prayer times are calculated on your phone (PrayTimes method). Noor can't send adhan notifications — iPhone doesn't allow web apps to schedule alarms.<br><br>
       Quran text: Quran.com Uthmani tajweed text (react-native-quran-tajweed, MIT). Font: Scheherazade New (SIL OFL).
       Adhkar: Hisn al-Muslim (morning-evening-adhkar-data, CC BY 4.0). Ratib: wird-al-sakran-data (CC BY 4.0).
-      Recitations: Islamic Network CDN (alquran.cloud).<br><br>Your settings, favourites and counts are stored only on this iPhone.
+      Recitations: Islamic Network CDN (alquran.cloud). Addresses: © OpenStreetMap contributors (Nominatim).<br><br>Your settings, favourites and counts are stored only on this iPhone.
     </div>`;
 
   const $ = id => document.getElementById(id);
@@ -758,9 +923,9 @@ const mini = document.getElementById('mini');
 function renderMini() {
   if (!player.current) { mini.hidden = true; return; }
   mini.hidden = false;
-  const pct = player.duration ? (player.position / player.duration) * 100 : 0;
+  const pct = player.progress * 100;
   mini.innerHTML = `
-    <div class="t"><div style="font-weight:500">${surahEn(player.current)}</div>
+    <div class="t"><div style="font-weight:500">${surahEn(player.current)}${player.current !== RATIB && player.ayah ? ` <span class="muted small">· ${player.ayah}/${player.count}</span>` : ''}${player.error ? ` <span class="small" style="color:var(--near)">· ${player.error}</span>` : ''}</div>
       <div class="ar gold" style="text-align:left;font-size:15px">${surahAr(player.current)}</div></div>
     <button class="iconbtn" data-m="toggle">${player.playing ? ICON.pause : ICON.play}</button>
     <button class="iconbtn" data-m="next">${ICON.next}</button>

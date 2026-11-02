@@ -46,14 +46,15 @@ export async function surahHtml(n) {
   const res = await fetch(`data/quran/surah_${String(n).padStart(3, '0')}.json`);
   const data = await res.json();
   let html = `<div class="head">سورة ${surahAr(n)}</div>`;
-  if (n !== 1 && n !== 9) html += `<div class="bism">${BISMILLAH}</div>`;
+  if (n !== 1 && n !== 9) html += `<div class="bism"><span class="ay" data-a="0">${BISMILLAH}</span></div>`;
   html += '<div class="body">';
   for (const a of data.ayahs) {
+    html += `<span class="ay" data-a="${a.ayah}">`;
     for (const [text, rules] of a.s) {
       const r = rules.find(x => x <= 16);
       html += r === undefined ? esc(text) : `<span class="r${r}">${esc(text)}</span>`;
     }
-    html += ` <span class="am">۝${arabicDigits(a.ayah)}</span> `;
+    html += ` <span class="am">۝${arabicDigits(a.ayah)}</span></span> `;
   }
   html += '</div><div class="end">صَدَقَ ٱللَّهُ ٱلْعَظِيمُ</div>';
   return html;

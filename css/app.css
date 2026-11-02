@@ -266,3 +266,28 @@ body.reading #mini { bottom: calc(var(--safe-bottom) + 70px); }
 .theme.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
 .theme .sw { height: 54px; display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 7px; }
 .theme .sw i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+
+/* ---------- recitation ---------- */
+.mushaf .ay { border-radius: 10px; transition: background .3s; -webkit-box-decoration-break: clone; box-decoration-break: clone; cursor: pointer; }
+.mushaf .ay.playing { background: color-mix(in srgb, var(--gold) 22%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 22%, transparent); }
+.mushaf .ay.sel { background: color-mix(in srgb, var(--gold) 12%, transparent); }
+.abar { display: flex; align-items: center; gap: 4px; background: var(--float); border: 1px solid var(--stroke); border-radius: 999px; padding: 4px 6px; max-width: 100%; }
+.abar .iconbtn { width: 40px; height: 40px; }
+.abar .iconbtn.play { background: var(--gold); color: var(--bg); }
+.abar .ainfo { font-size: 13px; padding: 0 6px; white-space: nowrap; min-width: 92px; text-align: center; }
+.abar .pill { padding: 6px 10px; font-size: 13px; }
+
+/* ---------- listen & count ---------- */
+.pill.listen { padding: 11px 18px; font-size: 15px; }
+.vstate { width: min(300px, 86vw); text-align: center; }
+.vlevel { height: 6px; border-radius: 3px; background: var(--card); border: 1px solid var(--stroke); overflow: hidden; margin-bottom: 6px; }
+.vlevel i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .08s; }
+.vopt { border: 1px solid var(--stroke); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; }
+.vopt.on { border-color: var(--gold); background: var(--card-hi); }
+#counter.flash .ring { filter: drop-shadow(0 0 22px var(--gold)); }
+
+/* ---------- location line ---------- */
+.locline { display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; text-align: left; color: var(--silver); }
+.locline svg { color: var(--gold); flex: none; margin-top: 2px; }
+.locline .l1 { display: block; font-size: 14px; font-weight: 500; }
+.locline .l2 { display: block; font-size: 12.5px; color: var(--dim); }
