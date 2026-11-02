@@ -107,6 +107,8 @@ body.full #toast { bottom: calc(var(--safe-bottom) + 90px); }
 .times .v { font-size: 19px; font-weight: 300; text-align: right; }
 .times .iq { font-size: 12px; color: var(--muted); text-align: right; }
 .times .t.sun .n, .times .t.sun .v { color: var(--dim); }
+.times .t.th .n, .times .t.th .v { color: var(--silver); }
+.times .t.th.hi .n, .times .t.th.hi .v { color: var(--gold-light); }
 
 /* ---------- quran list ---------- */
 .search { width: 100%; padding: 11px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--stroke); margin-bottom: 12px; -webkit-user-select: text; user-select: text; }

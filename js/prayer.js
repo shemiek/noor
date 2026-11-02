@@ -73,7 +73,32 @@ export function prayerDay(date = new Date()) {
     const gap = isFriday && i === 2 ? 20 : (iq[SLOT[i]] ?? 0);
     return new Date(t.getTime() + gap * 60000);
   });
-  return { start, adhan, iqama, isFriday };
+  // Tahajjud: reminder time before Fajr, and where the last third of the night begins
+  const fajr = adhan[0];
+  const tahajjud = new Date(fajr.getTime() - s.tahajjud * 60000);
+  const nightStart = new Date(adhan[4].getTime() - 86400000);           // yesterday's Maghrib (close enough)
+  const lastThird = new Date(fajr.getTime() - (fajr - nightStart) / 3);
+  return { start, adhan, iqama, isFriday, tahajjud, lastThird };
+}
+
+/** Calendar file with a Tahajjud event + alert for each of the next `days` nights. */
+export function tahajjudIcs(days = 60) {
+  const pad = n => String(n).padStart(2, '0');
+  const f = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Noor//Tahajjud//EN', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Tahajjud'];
+  const base = new Date();
+  for (let k = 0; k < days; k++) {
+    const day = prayerDay(new Date(base.getFullYear(), base.getMonth(), base.getDate() + k, 12));
+    if (day.tahajjud < base) continue;
+    const end = new Date(day.adhan[0]);
+    lines.push('BEGIN:VEVENT', `UID:tahajjud-${f(day.start).slice(0, 8)}@noor`, `DTSTAMP:${stamp}`,
+      `DTSTART:${f(day.tahajjud)}`, `DTEND:${f(end)}`,
+      'SUMMARY:Tahajjud', `DESCRIPTION:Tahajjud time. Fajr adhan at ${pad(end.getHours())}:${pad(end.getMinutes())}.`,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Tahajjud', 'TRIGGER:PT0M', 'END:VALARM', 'END:VEVENT');
+  }
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
 }
 
 export function prayerName(day, i) {

@@ -1,6 +1,6 @@
 // Noor — screens and navigation.
 import { get, set, settings, favourites, putFile, getFile, IQAMA_DEFAULTS } from './store.js';
-import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS } from './prayer.js';
+import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs } from './prayer.js';
 import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH, TASBIH_ORDER, TARGET_CHOICES } from './data.js';
 import { player, play, toggle, next, stop, resetRatib, playAyah, nextAyah, prevAyah, setSpeed } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
@@ -114,6 +114,7 @@ function today() {
     ${standalone ? '' : `<div class="card" style="margin-top:14px"><div class="label gold">Install</div>
       <p class="note" style="margin:6px 0 0">Tap <b>Share</b> <span class="gold">⬆︎</span> in Safari, then <b>Add to Home Screen</b>. Noor then opens like an app and works offline.</p></div>`}`;
   const draw = () => { const d = document.getElementById('dyn'); if (d) d.innerHTML = todayHtml(new Date()); };
+  view.addEventListener('click', e => { if (e.target.closest('#thcal')) addTahajjudToCalendar(); });
   draw();
   const timer = setInterval(draw, 1000);
   onLeave(() => clearInterval(timer));
@@ -126,6 +127,31 @@ function today() {
   view.addEventListener('click', e => { if (e.target.closest('[data-loc]')) requestLocation(true); });
   requestLocation();
 }
+
+/** iPhone web apps can't schedule notifications, so the reminder goes into the Calendar app. */
+async function addTahajjudToCalendar() {
+  const ics = tahajjudIcs(60);
+  const file = new File([ics], 'tahajjud.ics', { type: 'text/calendar' });
+  set('tahajjudCalAt', Date.now());
+  // Safari opens a .ics file with "Add All" to Calendar
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'tahajjud.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  toast('Tap “Add All” to put 60 nights of Tahajjud reminders in Calendar', 5000);
+}
+
+// While Noor is open, chime at Tahajjud time
+let thAlerted = '';
+setInterval(() => {
+  if (!settings.tahajjudAlert) return;
+  const now = new Date(), d = prayerDay(now), key = d.start.toDateString();
+  if (thAlerted !== key && now >= d.tahajjud && now - d.tahajjud < 60000) {
+    thAlerted = key; beep(true); setTimeout(() => beep(true), 700);
+    toast(`Tahajjud — Fajr at ${fmtTime(d.adhan[0])}`, 10000);
+  }
+}, 15000);
 
 function todayHtml(now) {
   const h = hijri(now);
@@ -149,6 +175,14 @@ function todayHtml(now) {
       <div><div class="v">${fmtTime(day.adhan[k])}</div>
       ${day.iqama[k] ? `<div class="iq">${day.isFriday && k === 2 ? 'Khutbah' : 'Iqama ' + fmtTime(day.iqama[k])}</div>` : ''}</div>
     </div>`).join('');
+  const thHi = now >= day.lastThird && now < day.adhan[0];
+  const thRow = `
+    <div class="t th ${thHi ? 'hi' : ''}">
+      <div><div class="n">Tahajjud</div><div class="na ar" style="direction:rtl;text-align:left">التهجد</div></div>
+      <div class="spacer"></div>
+      <div><div class="v">${fmtTime(day.tahajjud)}</div>
+      <div class="iq">${settings.tahajjud} min before Fajr · last third ${fmtTime(day.lastThird)}</div></div>
+    </div>`;
   return `
     <div style="margin:6px 0 14px">
       <div class="hijri-ar ar" style="text-align:left">${h.ar}</div>
@@ -169,7 +203,8 @@ function todayHtml(now) {
         ${d.iqama[i] && !(d.isFriday && i === 2) ? `<span class="dim small">Iqama ${fmtTime(d.iqama[i])}</span>` : ''}
       </div>
     </div>
-    <div class="card times">${rows}</div>`;
+    <div class="card times">${thRow}${rows}</div>
+    <button class="pill" id="thcal" style="margin:10px 0 12px;width:100%">🔔 Tahajjud reminder in Calendar</button>`;
 }
 
 // ================= Qibla =================
@@ -976,6 +1011,11 @@ function settingsScreen() {
       <div class="set"><span class="lbl">Location<div class="small">${addressLines()[0]}</div><div class="tiny muted">${addressLines()[1]}</div>
         <div class="tiny muted">${s.hasLocation ? `${s.lat.toFixed(5)}, ${s.lon.toFixed(5)} · ±${get('locAccuracy', 0)} m` : ''}</div></span><button class="pill" id="loc">Update</button></div>
     </div>
+    <div class="label" style="margin:16px 4px 6px">Tahajjud</div>
+    <div class="card">${stepper('th', 'Reminder before Fajr', s.tahajjud + ' min')}
+      <div class="set"><span class="lbl">Chime when Noor is open</span>${sw('thalert', s.tahajjudAlert)}</div>
+      <div class="set"><span class="lbl">Calendar reminders<div class="tiny muted">${get('tahajjudCalAt', 0) ? 'Added ' + new Date(get('tahajjudCalAt', 0)).toLocaleDateString() + ' · add again after 2 months or if you move' : '60 nights, with an alert at Tahajjud time'}</div></span><button class="pill" id="thcal2">Add</button></div>
+    </div>
     <div class="label" style="margin:16px 4px 6px">Iqama — minutes after adhan</div>
     <div class="card">${names.map((n, k) => stepper('iq' + k, n, iq[k] + ' min')).join('')}</div>
     <div class="label" style="margin:16px 4px 6px">Fine-tune</div>
@@ -984,7 +1024,7 @@ function settingsScreen() {
     <p class="note">Set the iqama minutes to match your masjid. Fine-tune moves an adhan time by a minute or two if your local timetable differs.</p>
     <div class="label" style="margin:16px 4px 6px">About</div>
     <div class="card note" style="margin-top:0">
-      Prayer times are calculated on your phone (PrayTimes method). Noor can't send adhan notifications — iPhone doesn't allow web apps to schedule alarms.<br><br>
+      Prayer times are calculated on your phone (PrayTimes method). Noor can't send adhan notifications — iPhone doesn't allow web apps to schedule alarms, so the Tahajjud reminder is added to your Calendar instead.<br><br>
       Quran text: Quran.com Uthmani tajweed text (react-native-quran-tajweed, MIT). Font: Scheherazade New (SIL OFL).
       Adhkar: Hisn al-Muslim (morning-evening-adhkar-data, CC BY 4.0). Ratib: wird-al-sakran-data (CC BY 4.0).
       Recitations: Islamic Network CDN (alquran.cloud). Addresses: © OpenStreetMap contributors (Nominatim).<br><br>Your settings, favourites and counts are stored only on this iPhone.
@@ -994,6 +1034,8 @@ function settingsScreen() {
   $('method').onchange = e => set('method', +e.target.value);
   $('hanafi').onchange = e => set('hanafi', e.target.checked);
   $('friday').onchange = e => set('friday', e.target.checked);
+  $('thalert').onchange = e => set('tahajjudAlert', e.target.checked);
+  $('thcal2').onclick = addTahajjudToCalendar;
   $('loc').onclick = () => requestLocation(true);
   view.addEventListener('click', e => {
     const th = e.target.closest('[data-theme-id]');
@@ -1009,6 +1051,8 @@ function settingsScreen() {
       const k = +id[2], a = settings.iqama; a[k] = Math.min(60, Math.max(0, a[k] + d)); set('iqama', a); $(id).textContent = a[k] + ' min';
     } else if (id.startsWith('of')) {
       const k = +id[2], a = settings.offsets; a[k] = Math.min(15, Math.max(-15, a[k] + d)); set('offsets', a); $(id).textContent = signed(a[k], 'min');
+    } else if (id === 'th') {
+      const v = Math.min(120, Math.max(10, settings.tahajjud + d * 5)); set('tahajjud', v); $(id).textContent = v + ' min';
     } else if (id === 'hj') {
       const v = Math.min(2, Math.max(-2, settings.hijriOffset + d)); set('hijriOffset', v); $(id).textContent = signed(v, 'day');
     }

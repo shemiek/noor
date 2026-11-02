@@ -19,6 +19,8 @@ export const settings = {
   get hanafi() { return get('hanafi', false); },
   get friday() { return get('friday', true); },
   get hijriOffset() { return get('hijriOffset', 0); },
+  get tahajjud() { return get('tahajjud', 30); },        // minutes before Fajr
+  get tahajjudAlert() { return get('tahajjudAlert', true); },
   get iqama() { return get('iqama', IQAMA_DEFAULTS.slice()); },
   get offsets() { return get('offsets', [0, 0, 0, 0, 0]); },
   get lat() { return get('lat', 25.2048); },      // Dubai until we know better
