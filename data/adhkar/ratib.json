@@ -1,0 +1,290 @@
+{
+  "meta": {
+    "title": "Wird al-Sakran & Ratib al-Haddad - ورد  السكران و راتب الحداد",
+    "author": "Imam Abu Bakr al-Sakran",
+    "count": 35,
+    "description": "A collection including the Wird of Imam Abu Bakr al-Sakran and the Ratib of Imam al-Haddad."
+  },
+  "data": [
+    {
+      "id": "wird_al_sakran_1",
+      "arabic": "اللهم إني احتطتُ بدرب الله، طولُهُ ما شاء الله، قُفلهُ لا إله إلا الله، بابهُ محمد رسول الله صلى الله عليه وآله وسلم، سقفهُ لا حول ولا قوة إلا بالله العلي العظيم",
+      "transliteration": "Allhm iny aḥtṭtu bdrb allh, ṭwluhu ma shaʾ allh, quflhu al- ilh ilal- allh, babhu mḥmd rswl allh ṣly allh ʿlyh wālh wslm, sqfhu al- ḥwl wal- qwa ilal- ballh al-ʿly al-ʿẓym",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "O Allah, I have fortified myself with the path of Allah, its length is as Allah wills, its lock is 'There is no god but Allah', its door is Muhammad, the Messenger of Allah (may Allah bless him and his family and grant them peace), its ceiling is 'There is no power and no strength except with Allah, the Most High, the Great'."
+    },
+    {
+      "id": "wird_al_sakran_2",
+      "arabic": "راتب الحداد",
+      "transliteration": "Ratb al-ḥdad",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "Ratib al-Haddad, the litany of Imam Abdallah bin Alawi al-Haddad."
+    },
+    {
+      "id": "wird_al_sakran_3",
+      "arabic": "الفاتحة إلى روح صاحب الراتب القطب الإرشاد الحبيب عبد الله بن علوي الحداد، وإلى حضرة النبي محمد صلى الله عليه وآله وسلم، الفاتحة",
+      "transliteration": "Al-fatḥa ily rwḥ ṣaḥb al-ratb al-qṭb al-irshad al-ḥbyb ʿbd allh bn ʿlwy al-ḥdad, wil-y ḥḍra al-nby mḥmd ṣly allh ʿlyh wālh wslm, al-fatḥa",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "The Fatiha to the soul of the master of the Ratib, the Qutb, the Guide, al-Habib Abdallah bin Alawi al-Haddad, and to the presence of the Prophet Muhammad (may Allah bless him and his family and grant him peace), al-Fatiha."
+    },
+    {
+      "id": "wird_al_sakran_4",
+      "arabic": "بسم الله الرحمن الرحيم. الحمد لله رب العالمين. الرحمن الرحيم. مالك يوم الدين. إياك نعبد وإياك نستعين. اهدنا الصراط المستقيم. صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين.",
+      "transliteration": "Bsm allh al-rḥmn al-rḥym al-ḥmd llh rb al-ʿal-myn al-rḥmn al-rḥym mal-k ywm al-dyn īak nʿbd wīak nstʿyn ahdna al-ṣraṭ al-mstqym ṣraṭ al-dhyn anʿmt ʿlyhm ghyr al-mghḍwb ʿlyhm wal- al-ḍal-yn",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "In the name of Allah, the Beneficent, the Merciful. Praise be to Allah, Lord of the worlds, the Beneficent, the Merciful. Master of the Day of Judgment. You alone we worship, and You alone we ask for help. Guide us to the straight path, the path of those upon whom You have bestowed favor, not of those who have earned Your anger, nor of those who go astray."
+    },
+    {
+      "id": "wird_al_sakran_5",
+      "arabic": "الله لا إله إلا هو الحي القيوم لا تأخذه سنة ولا نوم له ما في السماوات وما في الأرض من ذا الذي يشفع عنده إلا بإذنه يعلم ما بين أيديهم وما خلفهم ولا يحيطون بشيء من علمه إلا بما شاء وسع كرسيه السماوات والأرض ولا يؤوده حفظهما وهو العلي العظيم",
+      "transliteration": "Allh al- ilh ilal- hw al-ḥy al-qywm al- takhdhh sna wal- nwm lh ma fy al-smawat wma fy al-arḍ mn dha al-dhy yshfʿ ʿndh ilal- bidhnh yʿlm ma byn aydyhm wma khlfhm wal- yḥyṭwn bshyʾ mn ʿlmh ilal- bma shaʾ wsʿ krsyh al-smawat wal-arḍ wal- yūdh ḥfẓhma whw al-ʿly al-ʿẓym",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "Allah! There is no god but He, the Living, the Self-Subsisting. Neither slumber nor sleep overtakes Him. To Him belongs whatever is in the heavens and whatever is on the earth. Who is he that can intercede with Him except with His permission? He knows what is before them and what is behind them, and they encompass nothing of His knowledge except what He wills. His Kursi extends over the heavens and the earth, and their preservation tires Him not. And He is the Most High, the Most Great."
+    },
+    {
+      "id": "wird_al_sakran_6",
+      "arabic": "آمن الرسول بما أنزل إليه من ربه والمؤمنون كل آمن بالله وملائكته وكتبه ورسله لا نفرق بين أحد من رسله وقالوا سمعنا وأطعنا غفرانك ربنا وإليك المصير.",
+      "transliteration": "āmn al-rswl bma anzl ilyh mn rbh wal-mumnwn kl āmn ballh wmalikth wktbh wrslh al- nfrq byn aḥd mn rslh wqal-wa smʿna waṭʿna ghfrank rbna wil-yk al-mṣyr",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "The Messenger believes in what was revealed to him from his Lord, and so do the believers. Each one believes in Allah, His angels, His books, and His messengers. We make no distinction between any of His messengers. And they say: We hear and we obey. Your forgiveness, our Lord, and to You is the destination."
+    },
+    {
+      "id": "wird_al_sakran_7",
+      "arabic": "لا يكلف الله نفسا إلا وسعها لها ما كسبت وعليها ما اكتسبت ربنا لا تؤاخذنا إن نسينا أو أخطأنا ربنا ولا تحمل علينا إصرا كما حملته على الذين من قبلنا ربنا ولا تحملنا ما لا طاقة لنا به واعف عنا واغفر لنا وارحمنا أنت مولانا فانصرنا على القوم الكافرين.",
+      "transliteration": "Al- yklf allh nfsa ilal- wsʿha lha ma ksbt wʿlyha ma aktsbt rbna al- tuakhdhna in nsyna aw akhṭana rbna wal- tḥml ʿlyna iṣra kma ḥmlth ʿly al-dhyn mn qblna rbna wal- tḥmlna ma al- ṭaqa lna bh waʿf ʿna waghfr lna warḥmna ant mwal-na fanṣrna ʿly al-qwm al-kafryn",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "Allah does not burden a soul beyond its capacity. It shall have what it has earned, and it shall be accountable for what it has incurred. Our Lord, do not punish us if we forget or make a mistake. Our Lord, do not lay upon us a burden like that which You laid upon those before us. Our Lord, do not impose upon us that which we have no strength to bear. And pardon us, forgive us, and have mercy upon us. You are our Protector, so help us against the disbelieving people."
+    },
+    {
+      "id": "wird_al_sakran_8",
+      "arabic": "لا إله إلا الله وحده لا شريك له، له الملك وله الحمد يحيي ويميت وهو على كل شيء قدير.",
+      "transliteration": "Al- ilh ilal- allh wḥdh al- shryk lh, lh al-mlk wlh al-ḥmd yḥyy wymyt whw ʿly kl shyʾ qdyr",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "There is no god but Allah alone, without partner. His is the sovereignty and His is the praise. He gives life and causes death, and He is over all things competent."
+    },
+    {
+      "id": "wird_al_sakran_9",
+      "arabic": "سبحان الله والحمد لله ولا إله إلا الله والله أكبر.",
+      "transliteration": "Sbḥan allh wal-ḥmd llh wal- ilh ilal- allh wallh akbr",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "Glory be to Allah, praise be to Allah, there is no god but Allah, and Allah is the Greatest."
+    },
+    {
+      "id": "wird_al_sakran_10",
+      "arabic": "سبحان الله وبحمده سبحان الله العظيم.",
+      "transliteration": "Sbḥan allh wbḥmdh sbḥan allh al-ʿẓym",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "Glory be to Allah and with His praise, glory be to Allah the Magnificent."
+    },
+    {
+      "id": "wird_al_sakran_11",
+      "arabic": "ربنا اغفر لنا وتب علينا إنك أنت التواب الرحيم.",
+      "transliteration": "Rbna aghfr lna wtb ʿlyna ink ant al-twab al-rḥym",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "Our Lord, forgive us and relent towards us. Indeed, You are the Oft-Returning, the Merciful."
+    },
+    {
+      "id": "wird_al_sakran_12",
+      "arabic": "اللهم صل على محمد، اللهم صل عليه وسلم.",
+      "transliteration": "Allhm ṣl ʿly mḥmd, allhm ṣl ʿlyh wslm",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "O Allah, bless Muhammad, O Allah, bless him and grant him peace."
+    },
+    {
+      "id": "wird_al_sakran_13",
+      "arabic": "أعوذ بكلمات الله التامات من شر ما خلق.",
+      "transliteration": "Aʿwdh bklmat allh al-tamat mn shr ma khlq",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "I seek refuge in the perfect words of Allah from the evil of what He has created."
+    },
+    {
+      "id": "wird_al_sakran_14",
+      "arabic": "بسم الله الذي لا يضر مع اسمه شيء في الأرض ولا في السماء وهو السميع العليم.",
+      "transliteration": "Bsm allh al-dhy al- yḍr mʿ asmh shyʾ fy al-arḍ wal- fy al-smaʾ whw al-smyʿ al-ʿlym",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "In the name of Allah, with whose name nothing on earth or in heaven can cause harm, and He is the All-Hearing, the All-Knowing."
+    },
+    {
+      "id": "wird_al_sakran_15",
+      "arabic": "رضينا بالله ربا وبالإسلام دينا وبمحمد نبيا.",
+      "transliteration": "Rḍyna ballh rba wbal-isal-m dyna wbmḥmd nbya",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "We are pleased with Allah as Lord, with Islam as religion, and with Muhammad as Prophet."
+    },
+    {
+      "id": "wird_al_sakran_16",
+      "arabic": "بسم الله والحمد لله والخير والشر بمشيئة الله.",
+      "transliteration": "Bsm allh wal-ḥmd llh wal-khyr wal-shr bmshyia allh",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "In the name of Allah, and praise be to Allah, and good and evil are by the will of Allah."
+    },
+    {
+      "id": "wird_al_sakran_17",
+      "arabic": "آمنا بالله واليوم الآخر تبنا إلى الله باطنا وظاهرا.",
+      "transliteration": "āmna ballh wal-ywm al-ākhr tbna ily allh baṭna wẓahra",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "We believe in Allah and the Last Day. We repent to Allah inwardly and outwardly."
+    },
+    {
+      "id": "wird_al_sakran_18",
+      "arabic": "يا ربنا واعف عنا وامح الذي كان منا.",
+      "transliteration": "Ya rbna waʿf ʿna wamḥ al-dhy kan mna",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "O our Lord, pardon us and erase what was from us."
+    },
+    {
+      "id": "wird_al_sakran_19",
+      "arabic": "يا ذا الجلال والإكرام أمتنا على دين الإسلام.",
+      "transliteration": "Ya dha al-jall- wal-ikram amtna ʿly dyn al-isal-m",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "O Possessor of Majesty and Honor, cause us to die upon the religion of Islam."
+    },
+    {
+      "id": "wird_al_sakran_20",
+      "arabic": "يا قوي يا متين اكف شر الظالمين.",
+      "transliteration": "Ya qwy ya mtyn akf shr al-ẓal-myn",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "O Strong, O Firm, suffice us against the evil of the oppressors."
+    },
+    {
+      "id": "wird_al_sakran_21",
+      "arabic": "أصلح الله أمور المسلمين صرف الله شر المؤذين.",
+      "transliteration": "Aṣlḥ allh amwr al-mslmyn ṣrf allh shr al-mudhyn",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "May Allah rectify the affairs of the Muslims, may Allah avert the evil of the harm-doers."
+    },
+    {
+      "id": "wird_al_sakran_22",
+      "arabic": "يا علي يا كبير يا عليم يا قدير يا سميع يا بصير يا لطيف يا خبير.",
+      "transliteration": "Ya ʿly ya kbyr ya ʿlym ya qdyr ya smyʿ ya bṣyr ya lṭyf ya khbyr",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "O Most High, O Most Great, O All-Knowing, O All-Powerful, O All-Hearing, O All-Seeing, O Most Gentle, O All-Aware."
+    },
+    {
+      "id": "wird_al_sakran_23",
+      "arabic": "يا فارج الهم يا كاشف الغم يا من لعبده يغفر ويرحم.",
+      "transliteration": "Ya farj al-hm ya kashf al-ghm ya mn lʿbdh yghfr wyrḥm",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "O Reliever of anxiety, O Remover of distress, O He who forgives and has mercy on His servant."
+    },
+    {
+      "id": "wird_al_sakran_24",
+      "arabic": "أستغفر الله رب البرايا أستغفر الله من الخطايا.",
+      "transliteration": "Astghfr allh rb al-braya astghfr allh mn al-khṭaya",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "I seek forgiveness from Allah, Lord of creation. I seek forgiveness from Allah from sins."
+    },
+    {
+      "id": "wird_al_sakran_25",
+      "arabic": "لا إله إلا الله.",
+      "transliteration": "Al- ilh ilal- allh",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "There is no god but Allah."
+    },
+    {
+      "id": "wird_al_sakran_26",
+      "arabic": "محمد رسول الله صلى الله عليه وآله وسلم وشرف وكرم ومجد وعظم ورضي الله تعالى عن آل بيته المطهرين وأصحابه المهتدين والتابعين لهم بإحسان إلى يوم الدين.",
+      "transliteration": "Mḥmd rswl allh ṣly allh ʿlyh wālh wslm wshrf wkrm wmjd wʿẓm wrḍy allh tʿal-y ʿn āl byth al-mṭhryn waṣḥabh al-mhtdyn wal-tabʿyn lhm biḥsan ily ywm al-dyn",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "Muhammad is the Messenger of Allah, may Allah bless him and his family and grant them peace, and honor, venerate, extol, and magnify him, and may Allah be pleased with his purified family, his rightly-guided companions, and those who follow them in excellence until the Day of Judgment."
+    },
+    {
+      "id": "wird_al_sakran_27",
+      "arabic": "بسم الله الرحمن الرحيم. قل هو الله أحد. الله الصمد. لم يلد ولم يولد. ولم يكن له كفوا أحد.",
+      "transliteration": "Bsm allh al-rḥmn al-rḥym ql hw allh aḥd allh al-ṣmd lm yld wlm ywld wlm ykn lh kfwa aḥd",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "In the name of Allah, the Beneficent, the Merciful. Say: He is Allah, the One. Allah, the Eternal. He begets not, nor is He begotten. And there is none comparable to Him."
+    },
+    {
+      "id": "wird_al_sakran_28",
+      "arabic": "بسم الله الرحمن الرحيم. قل أعوذ برب الفلق. من شر ما خلق. ومن شر غاسق إذا وقب. ومن شر النفاثات في العقد. ومن شر حاسد إذا حسد.",
+      "transliteration": "Bsm allh al-rḥmn al-rḥym ql aʿwdh brb al-flq mn shr ma khlq wmn shr ghasq idha wqb wmn shr al-nfathat fy al-ʿqd wmn shr ḥasd idha ḥsd",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "In the name of Allah, the Beneficent, the Merciful. Say: I seek refuge in the Lord of daybreak from the evil of what He created, and from the evil of darkness when it settles, and from the evil of those who blow on knots, and from the evil of an envier when he envies."
+    },
+    {
+      "id": "wird_al_sakran_29",
+      "arabic": "بسم الله الرحمن الرحيم. قل أعوذ برب الناس. ملك الناس. إله الناس. من شر الوسواس الخناس. الذي يوسوس في صدور الناس. من الجنة والناس.",
+      "transliteration": "Bsm allh al-rḥmn al-rḥym ql aʿwdh brb al-nas mlk al-nas ilh al-nas mn shr al-wswas al-khnas al-dhy ywsws fy ṣdwr al-nas mn al-jna wal-nas",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "In the name of Allah, the Beneficent, the Merciful. Say: I seek refuge in the Lord of mankind, the King of mankind, the God of mankind, from the evil of the whisperer who withdraws, who whispers in the breasts of mankind, among jinn and mankind."
+    },
+    {
+      "id": "wird_al_sakran_30",
+      "arabic": "الفاتحة إلى روح سيدنا ومهاجرنا إلى الله أحمد بن عيسى، ولأصوله وفروعه، أن الله يعلي درجاتهم في الجنة، ويكثر من مثوباتهم ويضاعف حسناتهم، ويحفظنا بجاههم، وينفعنا بهم ويعيد علينا من بركاتهم وأسرارهم وأنوارهم وعلومهم في الدين والدنيا والآخرة... الفاتحة",
+      "transliteration": "Al-fatḥa ily rwḥ sydna wmhajrna ily allh aḥmd bn ʿysy, wlaṣwlh wfrwʿh, an allh yʿly drjathm fy al-jnt, wykthr mn mthwbathm wyḍaʿf ḥsnathm, wyḥfẓna bjahhm, wynfʿna bhm wyʿyd ʿlyna mn brkathm wasrarhm wanwarhm wʿlwmhm fy al-dyn wal-dnya wal-ākhrt al-fatḥa",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "The Fatiha to the soul of our master and our emigrant to Allah, Ahmad bin Isa, and to his ancestors and descendants, that Allah may elevate their ranks in Paradise, and increase their rewards and multiply their good deeds, and protect us by their honor, and benefit us through them, and bestow upon us from their blessings, secrets, lights, and knowledge in religion, world, and hereafter... al-Fatiha."
+    },
+    {
+      "id": "wird_al_sakran_31",
+      "arabic": "الفاتحة إلى روح سيدنا الأستاذ الأعظم الفقيه المقدم محمد بن علي باعلوي، وأصوله وفروعه وجميع ساداتنا آل أبي علوي، أن الله يعلي درجاتهم في الجنة، ويكثر من مثوباتهم ويضاعف حسناتهم، ويحفظنا بجاههم، وينفعنا بهم ويعيد علينا من بركاتهم وأسرارهم وأنوارهم وعلومهم في الدين والدنيا والآخرة... الفاتحة",
+      "transliteration": "Al-fatḥa ily rwḥ sydna al-astadh al-aʿẓm al-fqyh al-mqdm mḥmd bn ʿly baʿlwy, waṣwlh wfrwʿh wjmyʿ sadatna āl aby ʿlwy, an allh yʿly drjathm fy al-jnt, wykthr mn mthwbathm wyḍaʿf ḥsnathm, wyḥfẓna bjahhm, wynfʿna bhm wyʿyd ʿlyna mn brkathm wasrarhm wanwarhm wʿlwmhm fy al-dyn wal-dnya wal-ākhrt al-fatḥa",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "The Fatiha to the soul of our master, the greatest teacher, the foremost jurist, Muhammad bin Ali Ba Alawi, and his ancestors and descendants, and all our masters of the family of Abi Alawi, that Allah may elevate their ranks in Paradise, and increase their rewards and multiply their good deeds, and protect us by their honor, and benefit us through them, and bestow upon us from their blessings, secrets, lights, and knowledge in religion, world, and hereafter... al-Fatiha."
+    },
+    {
+      "id": "wird_al_sakran_32",
+      "arabic": "الفاتحة إلى روح صاحب الراتب قطب الإرشاد وغوث العباد والبلاد الحبيب عبد الله بن علوي الحداد أصوله وفروعه، أن الله يعلي درجاتهم في الجنة، ويكثر من مثوباتهم ويضاعف حسناتهم، ويحفظنا بجاههم، وينفعنا بهم ويعيد علينا من بركاتهم وأسرارهم وأنوارهم وعلومهم في الدين والدنيا والآخرة... الفاتحة",
+      "transliteration": "Al-fatḥa ily rwḥ ṣaḥb al-ratb qṭb al-irshad wghwth al-ʿbad wal-bal-d al-ḥbyb ʿbd allh bn ʿlwy al-ḥdad aṣwlh wfrwʿh, an allh yʿly drjathm fy al-jnt, wykthr mn mthwbathm wyḍaʿf ḥsnathm, wyḥfẓna bjahhm, wynfʿna bhm wyʿyd ʿlyna mn brkathm wasrarhm wanwarhm wʿlwmhm fy al-dyn wal-dnya wal-ākhrt al-fatḥa",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "The Fatiha to the soul of the master of the Ratib, the Qutb of guidance, the help of servants and lands, al-Habib Abdallah bin Alawi al-Haddad, his ancestors and descendants, that Allah may elevate their ranks in Paradise, and increase their rewards and multiply their good deeds, and protect us by their honor, and benefit us through them, and bestow upon us from their blessings, secrets, lights, and knowledge in religion, world, and hereafter... al-Fatiha."
+    },
+    {
+      "id": "wird_al_sakran_33",
+      "arabic": "الفاتحة إلى أرواح كافة عباد الله الصالحين ووالدينا ومشايخنا في الدين، وذوي الحقوق علينا، وأموات أهل هذه البلدة من المسلمين والمسلمات، والمؤمنين والمؤمنات، وأن الله يغفر لهم ويرحمهم ويعلي درجاتهم في الجنة، وينفعنا بأسرارهم وأنوارهم وعلومهم وبركاتهم في الدين والدنيا والآخرة... الفاتحة",
+      "transliteration": "Al-fatḥa ily arwaḥ kafa ʿbad allh al-ṣal-ḥyn wwal-dyna wmshaykhna fy al-dyn, wdhwy al-ḥqwq ʿlyna, wamwat ahl hdhh al-blda mn al-mslmyn wal-mslmat, wal-mumnyn wal-mumnat, wan allh yghfr lhm wyrḥmhm wyʿly drjathm fy al-jnt, wynfʿna basrarhm wanwarhm wʿlwmhm wbrkathm fy al-dyn wal-dnya wal-ākhrt al-fatḥa",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "The Fatiha to the souls of all righteous servants of Allah, our parents, our teachers in religion, those who have rights upon us, and the deceased of this town, Muslim men and women, believing men and women, and that Allah may forgive them, have mercy on them, elevate their ranks in Paradise, and benefit us through their secrets, lights, knowledge, and blessings in religion, world, and hereafter... al-Fatiha."
+    },
+    {
+      "id": "wird_al_sakran_34",
+      "arabic": "الفاتحة بالقبول، وتمام كل سول، ومأمول، وصلاح الشأن ظاهرا وباطنا، في الدين والدنيا والآخرة، دافعة لكل شر، جالبة لكل خير لنا ولأحبابنا ولوالدينا ولمشايخنا في الدين، مع اللطف والعافية، وعلى نية أن الله ينور قلوبنا وقوالبنا مع الهدى والتقى والعفاف والغنى، والموت على دين الإسلام بلا محنة ولا امتحان بحق سيد ولد عدنان، وجامعة لكل نية صالحة، وزيادة محبة في شرف الحبيب صلى الله عليه وآله وسلم... الفاتحة",
+      "transliteration": "Al-fatḥa bal-qbwl, wtmam kl swl, wmamwl, wṣal-ḥ al-shan ẓahra wbaṭna, fy al-dyn wal-dnya wal-ākhrt, dafʿa lkl shr, jal-ba lkl khyr lna wlaḥbabna wlwal-dyna wlmshaykhna fy al-dyn, mʿ allṭf wal-ʿafyt, wʿly nya an allh ynwr qlwbna wqwal-bna mʿ al-hdy wal-tqy wal-ʿfaf wal-ghny, wal-mwt ʿly dyn al-isal-m bal- mḥna wal- amtḥan bḥq syd wld ʿdnan, wjamʿa lkl nya ṣal-ḥt, wzyada mḥba fy shrf al-ḥbyb ṣly allh ʿlyh wālh wslm al-fatḥa",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "The Fatiha with acceptance, and fulfillment of every request and hope, and rectification of affairs outwardly and inwardly, in religion, world, and hereafter, repelling every evil, bringing every good for us, our loved ones, our parents, and our teachers in religion, with gentleness and well-being, and with the intention that Allah illuminates our hearts and bodies with guidance, piety, chastity, and wealth, and death upon the religion of Islam without trial or tribulation, by the right of the master, the son of Adnan, and encompassing every righteous intention, and increase of love for the honor of the Beloved (may Allah bless him and his family and grant him peace)... al-Fatiha."
+    },
+    {
+      "id": "wird_al_sakran_35",
+      "arabic": "اللهم إنا نسألك رضاك والجنة ونعوذ بك من سخطك والنار",
+      "transliteration": "Allhm ina nsal-k rḍak wal-jna wnʿwdh bk mn skhṭk wal-nar",
+      "source": "wird al sakran",
+      "is_quran": false,
+      "english": "O Allah, we ask You for Your pleasure and Paradise, and we seek refuge in You from Your wrath and the Fire."
+    }
+  ]
+}
