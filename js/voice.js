@@ -48,6 +48,7 @@ export class VoiceCounter {
 
   async start(mode) {
     this.stop(true);
+    this.log = [];
     this.active = true;
     this.mode = mode;
     try { this.wake = await navigator.wakeLock?.request('screen'); } catch { /* keep-awake not available */ }
@@ -73,51 +74,66 @@ export class VoiceCounter {
 
   // ----- learn your pace: recite a few times, then finish -----
   async learn() {
-    await this.start('pauses');
-    this.learning = { first: 0, last: 0, segments: 0, list: [] };
-    this.onState({ listening: true, mode: 'learn', segments: 0 });
+    this.stop(true);
+    this.active = true;
+    this.mode = 'pauses';
+    this.learning = { list: [] };           // set BEFORE the mic starts, so nothing is missed
+    this.log = [];
+    try { this.wake = await navigator.wakeLock?.request('screen'); } catch { /* ignore */ }
+    await this.startPauses();
   }
 
   /**
-   * Returns { pace, gap } — seconds per recitation and the pause (ms) that separates recitations —
-   * or null if not enough was heard.
+   * Works out how you recite from what was heard. Returns
+   * { pace: s per recitation, gap: ms pause between recitations, late: share of a recitation where the
+   *   last breath can still happen, reps: how many recitations were heard } — or null.
    */
-  finishLearn(reps) {
+  finishLearn(said = 3) {
     const l = this.learning;
     this.stop();
-    if (!l || l.list.length < 2 || reps < 1) return null;
+    if (!l || l.list.length < 2) return null;
     const segs = l.list;
     const gaps = segs.slice(1).map((s, i) => s[0] - segs[i][1]);
-    // the (reps - 1) longest pauses are between recitations; the rest are breaths inside one
+    // How many recitations? Try each possibility: the right one has a clear jump between
+    // "pause between recitations" and "breath", AND gives recitations of similar length.
     const sorted = gaps.slice().sort((a, b) => b - a);
+    const split = r => {
+      const cut = new Set(gaps.map((g, i) => [g, i]).sort((a, b) => b[0] - a[0]).slice(0, r - 1).map(x => x[1] + 1));
+      const gs = [[]];
+      segs.forEach((s, i) => { if (cut.has(i)) gs.push([]); gs[gs.length - 1].push(s); });
+      return gs;
+    };
+    let reps = Math.min(said, gaps.length + 1), bestScore = -1;
+    for (let r = 2; r <= Math.min(10, gaps.length + 1); r++) {
+      const gs = split(r);
+      const ls = gs.map(g => g[g.length - 1][1] - g[0][0]);
+      const mean = ls.reduce((a, b) => a + b, 0) / ls.length;
+      const cv = Math.sqrt(ls.reduce((a, b) => a + (b - mean) ** 2, 0) / ls.length) / mean;   // how uneven
+      const jump = sorted[r - 2] / Math.max(sorted[r - 1] || 1, 1);
+      const score = jump * Math.max(0.05, 1 - cv * 1.5) * (r === said ? 1.25 : 1);
+      if (score > bestScore) { bestScore = score; reps = r; }
+    }
+    const groups = split(reps);
+    const lens = groups.map(g => g[g.length - 1][1] - g[0][0]);
+    const pace = lens.reduce((a, b) => a + b, 0) / lens.length / 1000;
     const between = sorted.slice(0, reps - 1);
     const inside = sorted.slice(reps - 1);
-    const span = segs[segs.length - 1][1] - segs[0][0];
-    const pace = (span - between.reduce((a, b) => a + b, 0)) / reps / 1000;
-    const minBetween = between.length ? Math.min(...between) : 900;
+    const minBetween = between.length ? Math.min(...between) : 1000;
     const maxInside = inside.length ? Math.max(...inside) : 300;
-    // end-of-recitation pause: halfway between a breath and the real pause (or a bit longer than a breath)
-    // never longer than the real pause between recitations, and clearly longer than a breath
-    let gap = Math.max(maxInside * 1.15, minBetween * 0.7);
-    gap = Math.min(gap, minBetween * 0.85);
-    gap = Math.round(Math.min(1500, Math.max(350, gap)));
+    const gap = Math.round(Math.min(1500, Math.max(400, Math.min(minBetween * 0.85, Math.max(maxInside * 1.2, minBetween * 0.6)))));
+    // the last breath inside a recitation: counting must wait until after it
+    let lastBreath = 0;
+    groups.forEach((g, k) => { if (g.length > 1) lastBreath = Math.max(lastBreath, (g[g.length - 2][1] - g[0][0]) / lens[k]); });
+    const late = Math.round(Math.min(0.95, Math.max(0.78, (lastBreath || 0.82) * 1.06 + 0.03)) * 100) / 100;
+    return { pace: Math.max(1.5, Math.round(pace * 10) / 10), gap, late, reps };
+  }
 
-    // where does the last line start? (the breath before it must never be taken as the end)
-    const cut = new Set(gaps.map((g, i) => [g, i]).sort((a, b) => b[0] - a[0]).slice(0, reps - 1).map(x => x[1] + 1));
-    const groups = [[]];
-    segs.forEach((s, i) => { if (cut.has(i)) groups.push([]); groups[groups.length - 1].push(s); });
-    let lastLine = 0;
-    for (const g of groups) {
-      if (g.length < 2) continue;
-      const a = g[0][0], z = g[g.length - 1][1], breath = g[g.length - 2][1];   // breath before the last line
-      lastLine = Math.max(lastLine, (breath - a) / (z - a));
-    }
-    // count only once we're past that breath — with ~8% to spare for reciting a little slower
-    const late = Math.round(Math.min(0.95, Math.max(0.8, lastLine * 1.08 + 0.02)) * 100) / 100;
-    // how many breath-separated parts one recitation has (the most common number)
-    const sizes = groups.map(g => g.length).sort((a, b) => a - b);
-    const parts = sizes[Math.floor(sizes.length / 2)] || 1;
-    return { pace: Math.max(1.5, Math.round(pace * 10) / 10), gap, late, parts };
+  /** Short log of what was heard and decided (shown under "What it heard"). */
+  note(msg) {
+    const t0 = this.t0 || (this.t0 = performance.now());
+    this.log = this.log || [];
+    this.log.push(`${((performance.now() - t0) / 1000).toFixed(1).padStart(6)}s  ${msg}`);
+    if (this.log.length > 40) this.log.shift();
   }
 
   // ----- recognise the words -----
@@ -193,10 +209,13 @@ export class VoiceCounter {
     const buf = new Float32Array(an.fftSize);
 
     let floor = 0.01, speaking = false, loudSince = 0, quietSince = 0, segStart = 0;
-    let repStart = 0;          // when the current repetition began (first speech after the last count)
-    let voiced = 0;            // ms of actual voice heard in the current repetition
-    let parts = 0;             // breath-separated parts heard in the current repetition
-    let speechLvl = 0;         // how loud your voice is (so a drop to others' murmur still counts as a pause)
+    let repStart = 0;          // when the current recitation began
+    let voiced = 0;            // ms of actual voice in the current recitation
+    let speechLvl = 0;         // your voice level (a drop to others' murmur still counts as a pause)
+    let lastNoted = 0;
+    this.t0 = performance.now();
+    this.log = this.log || [];
+    this.note(this.learning ? 'learning started' : `listening · pace ${this.pace() || '—'} s`);
     this.timer = setInterval(() => {
       an.getFloatTimeDomainData(buf);
       let sum = 0;
@@ -207,60 +226,59 @@ export class VoiceCounter {
       const now = performance.now();
       const pace = this.pace() * 1000;
       if (speaking) { voiced += 30; speechLvl = speechLvl ? speechLvl * 0.97 + rms * 0.03 : rms; }
-      else speechLvl *= 0.997;                                   // eases down in silence (half-life ~7 s)
+      else speechLvl *= 0.997;
 
+      // ---- voice / pause detection ----
       if (!speaking) {
         if (rms > on) {
           if (!loudSince) loudSince = now;
           if (now - loudSince > 90) {
-            speaking = true; segStart = loudSince; quietSince = 0;
+            speaking = true; segStart = loudSince;
+            if (quietSince && now - quietSince > 200 && (pace || this.learning)) this.note(`pause ${((loudSince - quietSince) / 1000).toFixed(2)}s`);
+            quietSince = 0;
             if (!repStart) repStart = segStart;
-            if (this.learning && !this.learning.first) this.learning.first = segStart;
           }
         } else loudSince = 0;
       } else if (rms < off) {
         if (!quietSince) quietSince = now;
-        if (now - quietSince > this.gapMs) {
+        const minPause = pace || this.learning ? 200 : this.gapMs;   // long dhikr: notice even short breaths
+        if (now - quietSince > minPause) {
           speaking = false; loudSince = 0;
           const segLen = quietSince - segStart;
           if (this.learning) {
-            if (segLen > 150) { this.learning.last = quietSince; this.learning.segments++; this.learning.list.push([segStart, quietSince]); }
+            if (segLen > 150) { this.learning.list.push([segStart, quietSince]); this.note(`voice ${(segLen / 1000).toFixed(1)}s`); }
           } else if (!pace) {
-            if (segLen > 220) this.onCount(1);              // short dhikr: every pause is one
+            if (segLen > 220) { this.onCount(1); }                  // short dhikr: every pause is one
             repStart = 0; voiced = 0;
-          } else if (segLen > 150) parts++;
-          // long dhikr: decided below, once the pause is long enough
+          }
         }
       } else quietSince = 0;
 
+      // ---- long dhikr: is this the end of a recitation? ----
       if (pace && repStart && !this.learning) {
         const tu = this.tuning();
-        const endGap = tu.gap || 700, ratio = tu.ratio || 0.8, late = tu.late || 0.9, want = tu.parts || 0;
+        const late = tu.late || 0.88, endGap = tu.gap || 800;
         const quiet = !speaking && quietSince ? now - quietSince : 0;
-        const span = quietSince ? quietSince - repStart : 0;
-        const enoughVoice = voiced >= pace * 0.55;
-        let end = false;
-        if (want > 1) {
-          // learned: all the parts heard and most of the time passed, then a pause — tolerant of speed changes
-          end = (quiet >= Math.min(endGap, 450) && parts >= want && span >= pace * Math.max(0.7, late - 0.06) && enoughVoice)
-             || (quiet >= endGap && parts >= want - 1 && span >= pace * ratio && enoughVoice)
-             || (quiet >= Math.max(endGap, 1500) && span >= pace * ratio && enoughVoice);   // a long silence after most of it
-        } else {
-          end = (quiet >= Math.min(endGap, 450) && span >= pace * late && enoughVoice)
-             || (quiet >= endGap && span >= pace * ratio && enoughVoice);
-        }
-        if (end) {
+        const span = quietSince ? quietSince - repStart : now - repStart;
+        let why = '';
+        if (quiet >= 300 && span >= pace * late && voiced >= pace * 0.5) why = `after the last line (${(span / 1000).toFixed(1)}s)`;
+        else if (quiet >= Math.max(endGap * 1.5, 1200) && span >= pace * 0.6 && voiced >= pace * 0.4) why = `long pause (${(span / 1000).toFixed(1)}s)`;
+        if (why) {
           this.onCount(span > pace * 1.75 ? Math.round(span / pace) : 1);
-          // keep learning: follow gradual changes in your speed
-          if (span > pace * 0.75 && span < pace * 1.3 && this.onPace) this.onPace(span / 1000);
-          repStart = 0; voiced = 0; parts = 0;
-        } else if (quiet && quiet > Math.max(3000, pace * 0.6)) {
-          repStart = 0; voiced = 0; parts = 0;               // stopped part-way; start fresh next time
-        } else if (now - repStart > pace * 1.35 && voiced >= pace * 0.9) {
-          // no clear pause at all — count on the expected rhythm
-          this.onCount(1);
+          this.note(`COUNT · ${why}`);
+          if (span > pace * 0.8 && span < pace * 1.25 && this.onPace) this.onPace(span / 1000);   // follow your speed
+          repStart = 0; voiced = 0;
+        } else if (quiet >= 300 && quiet < 330 && span < pace * late && now - lastNoted > 500) {
+          this.note(`breath at ${Math.round(span / pace * 100)}% — not the end yet`);
+          lastNoted = now;
+        } else if (quiet > Math.max(5000, pace * 0.6)) {
+          this.note(`stopped at ${Math.round(span / pace * 100)}% — starting fresh`);
+          repStart = 0; voiced = 0;
+        } else if (now - repStart > pace * 1.3 && voiced >= pace * 0.8) {
+          this.onCount(1);                                          // no clear pause (group): keep the rhythm
+          this.note('COUNT · by rhythm (no clear pause)');
           repStart = Math.max(repStart + pace, now - pace * 0.3);
-          voiced = Math.max(0, now - repStart) * 0.8; parts = 0;
+          voiced = Math.max(0, now - repStart) * 0.8;
         }
       }
 
@@ -268,7 +286,8 @@ export class VoiceCounter {
         listening: true, mode: this.learning ? 'learn' : 'pauses',
         level: Math.min(1, rms / (on * 2.5)), speaking,
         rep: pace && repStart ? Math.min(1, (now - repStart) / pace) : 0,
-        segments: this.learning ? this.learning.segments : undefined,
+        segments: this.learning ? this.learning.list.length : undefined,
+        log: this.log,
       });
     }, 30);
     this.onState({ listening: true, mode: this.learning ? 'learn' : 'pauses', level: 0 });

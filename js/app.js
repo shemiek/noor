@@ -752,7 +752,7 @@ function counter() {
   const tuneOf = idx => {
     const v = st.paces[idx];
     const base = typeof v === 'number' ? { pace: v } : (v || {});
-    return { pace: base.pace || (TASBIH[idx]?.long ? TASBIH[idx].pace : 0), gap: base.gap || 800, ratio: base.ratio || 0.82, late: base.late || 0.9, parts: base.parts || 0, learned: !!v };
+    return { pace: base.pace || (TASBIH[idx]?.long ? TASBIH[idx].pace : 0), gap: base.gap || 800, ratio: base.ratio || 0.82, late: base.late || 0.88, learned: !!v };
   };
   const tuning = () => tuneOf(curIdx());
   const pace = () => tuning().pace;
@@ -761,13 +761,11 @@ function counter() {
     const r2 = x => Math.round(x * 100) / 100;
     const next = {
       pace: tu.pace,
-      ratio: r2(Math.min(1.0, Math.max(0.65, tu.ratio - dir * 0.05))),
-      late: r2(Math.min(1.05, Math.max(0.75, tu.late - dir * 0.04))),
+      late: r2(Math.min(1.0, Math.max(0.7, tu.late - dir * 0.03))),
       gap: Math.round(Math.min(2500, Math.max(300, tu.gap - dir * 150))),
-      parts: tu.parts ? Math.max(1, tu.parts - dir) : 0,
     };
     st.paces[idx] = next; save();
-    toast(`${dir < 0 ? 'Will wait longer' : 'Will count sooner'}${next.parts ? ` — after ${next.parts} parts` : ` — after ${Math.round(next.late * 100)}%`}`);
+    toast(`${dir < 0 ? 'Will wait longer' : 'Will count sooner'} — counts after ${Math.round(next.late * 100)}% of a recitation`);
   };
 
   view.innerHTML = `<div id="counter">
@@ -786,10 +784,12 @@ function counter() {
       <div class="vlevel"><i id="vlevel"></i></div>
       <div class="vrep" id="vrepbox" hidden><i id="vrep"></i></div>
       <div class="small" id="vtext"></div>
+      <button class="tiny gold" id="vlogbtn" style="margin-top:8px">What it heard ▾</button>
+      <pre class="vlog" id="vlog" hidden></pre>
       <div class="row" id="vtune" hidden style="justify-content:center;margin-top:8px">
         <button class="pill" id="vearly">Counted too early</button><button class="pill" id="vlate">Too late</button></div>
       <div class="row" id="vlearn" hidden style="justify-content:center;margin-top:8px">
-        <button class="pill on" id="vdone">Done — I said it 3 times</button><button class="pill" id="vcancel">Cancel</button></div>
+        <button class="pill on" id="vdone">Done</button><button class="pill" id="vcancel">Cancel</button></div>
     </div>
     <div class="tiny muted" id="ctotal"></div></div>`;
   const $ = id => document.getElementById(id);
@@ -846,8 +846,9 @@ function counter() {
       if (s.rep != null) $('vrep').style.width = Math.round(s.rep * 100) + '%';
       $('vlearn').hidden = s.mode !== 'learn';
       $('vtune').hidden = !(s.listening && s.mode === 'pauses' && pace());
+      if (s.log && !$('vlog').hidden) { const txt = s.log.slice().reverse().join('\n'); if ($('vlog').textContent !== txt) $('vlog').textContent = txt; }
       $('vtext').innerHTML = s.error ? `<span style="color:var(--near)">${s.error}</span>`
-        : s.mode === 'learn' ? `Recite <b class="goldl">${cur().en || 'the dhikr'}</b> 3 times at your normal pace, then tap Done${s.segments ? ` · heard ${s.segments} part${s.segments > 1 ? 's' : ''}` : ''}`
+        : s.mode === 'learn' ? `Recite <b class="goldl">${cur().en || 'the dhikr'}</b> 3 times or more at your normal pace, then tap Done${s.segments ? ` · heard ${s.segments} part${s.segments > 1 ? 's' : ''}` : ''}`
         : s.mode === 'words' ? `Listening for <b class="goldl">${cur().en || 'the dhikr'}</b>${s.heard ? ` · <span class="ar dim">${s.heard}</span>` : ''}`
         : pace() ? (s.speaking ? 'Hearing you…' : `Listening · counts after each full recitation (~${pace()} s) and a pause`)
         : s.speaking ? 'Hearing you…' : 'Listening — pause briefly after each one';
@@ -865,11 +866,12 @@ function counter() {
   $('vdone').onclick = () => {
     const r = voice.finishLearn(3);
     if (!r) { toast('Didn\'t hear enough — try again a little closer to the phone'); return; }
-    st.paces[curIdx()] = { pace: r.pace, gap: r.gap, ratio: Math.max(0.7, Math.round((r.late - 0.08) * 100) / 100), late: r.late, parts: r.parts }; save();
-    toast(`Got it — ${r.pace} s per recitation in ${r.parts} part${r.parts > 1 ? 's' : ''}. Counting…`, 4000);
+    st.paces[curIdx()] = { pace: r.pace, gap: r.gap, late: r.late }; save();
+    toast(`Heard ${r.reps} recitations — ${r.pace} s each, last breath at ~${Math.round(r.late * 100 - 3)}%. Counting…`, 5000);
     voice.start('pauses');
   };
   $('vearly').onclick = () => nudge(-1);
+  $('vlogbtn').onclick = () => { $('vlog').hidden = !$('vlog').hidden; $('vlogbtn').textContent = $('vlog').hidden ? 'What it heard ▾' : 'What it heard ▴'; };
   $('vlate').onclick = () => nudge(1);
   $('vcancel').onclick = () => voice.stop();
 
@@ -890,7 +892,7 @@ function counter() {
           ? 'Counts one after each full recitation, using your pace — breaths in the middle aren\'t counted. Works offline.'
           : 'Counts one each time you stop briefly. Works offline, any dhikr.'}</span></span></button>
       <div class="vopt" style="margin-top:4px">
-        <div class="row"><span style="flex:1"><b>Your pace</b><br><span class="small dim">${learned ? `${tu.pace} s per recitation${tu.parts > 1 ? ` · ${tu.parts} parts` : ''} · counts after the last part and a pause` : t.long ? `Not learned yet — using ~${t.pace} s` : 'Not needed for short dhikr'}</span></span>
+        <div class="row"><span style="flex:1"><b>Your pace</b><br><span class="small dim">${learned ? `${tu.pace} s per recitation · counts at a pause after ${Math.round(tu.late * 100)}%` : t.long ? `Not learned yet — using ~${t.pace} s` : 'Not needed for short dhikr'}</span></span>
           <button class="pill" data-learn="1">${learned ? 'Re-learn' : 'Learn'}</button></div>
         ${learned ? '<button class="tiny muted" data-forget="1" style="margin-top:6px">Forget my pace</button>' : ''}
       </div>
