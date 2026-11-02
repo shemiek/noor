@@ -748,8 +748,27 @@ function counter() {
   const curIdx = () => st.index < 0 ? [0, 1, 2][Math.min(st.step, 2)] : st.index;
   const cur = () => TASBIH[curIdx()] || TASBIH[0];
   const target = () => st.index < 0 ? cur().target : (st.targets[st.index] ?? cur().target);
-  // seconds per repetition: learned, or a sensible default for long dhikr (0 = short dhikr)
-  const pace = () => st.paces[curIdx()] || (cur().long ? cur().pace : 0);
+  // learned timing per dhikr: { pace: seconds per recitation, gap: ms pause that ends one, ratio: share of pace before counting }
+  const tuneOf = idx => {
+    const v = st.paces[idx];
+    const base = typeof v === 'number' ? { pace: v } : (v || {});
+    return { pace: base.pace || (TASBIH[idx]?.long ? TASBIH[idx].pace : 0), gap: base.gap || 800, ratio: base.ratio || 0.82, late: base.late || 0.9, parts: base.parts || 0, learned: !!v };
+  };
+  const tuning = () => tuneOf(curIdx());
+  const pace = () => tuning().pace;
+  const nudge = dir => {           // dir −1 = it counted too early, +1 = too late
+    const idx = curIdx(), tu = tuneOf(idx);
+    const r2 = x => Math.round(x * 100) / 100;
+    const next = {
+      pace: tu.pace,
+      ratio: r2(Math.min(1.0, Math.max(0.65, tu.ratio - dir * 0.05))),
+      late: r2(Math.min(1.05, Math.max(0.75, tu.late - dir * 0.04))),
+      gap: Math.round(Math.min(2500, Math.max(300, tu.gap - dir * 150))),
+      parts: tu.parts ? Math.max(1, tu.parts - dir) : 0,
+    };
+    st.paces[idx] = next; save();
+    toast(`${dir < 0 ? 'Will wait longer' : 'Will count sooner'}${next.parts ? ` — after ${next.parts} parts` : ` — after ${Math.round(next.late * 100)}%`}`);
+  };
 
   view.innerHTML = `<div id="counter">
     <button id="cname" style="text-align:center;max-width:92vw"></button>
@@ -767,6 +786,8 @@ function counter() {
       <div class="vlevel"><i id="vlevel"></i></div>
       <div class="vrep" id="vrepbox" hidden><i id="vrep"></i></div>
       <div class="small" id="vtext"></div>
+      <div class="row" id="vtune" hidden style="justify-content:center;margin-top:8px">
+        <button class="pill" id="vearly">Counted too early</button><button class="pill" id="vlate">Too late</button></div>
       <div class="row" id="vlearn" hidden style="justify-content:center;margin-top:8px">
         <button class="pill on" id="vdone">Done — I said it 3 times</button><button class="pill" id="vcancel">Cancel</button></div>
     </div>
@@ -812,7 +833,7 @@ function counter() {
   // ----- hands-free: listen and count -----
   const voice = new VoiceCounter({
     index: curIdx,
-    pace,
+    tuning,
     onCount: k => { for (let i = 0; i < k; i++) add(); },
     onState: s => {
       if (!$('vstate')) return;
@@ -824,23 +845,32 @@ function counter() {
       $('vrepbox').hidden = !(s.mode === 'pauses' && pace());
       if (s.rep != null) $('vrep').style.width = Math.round(s.rep * 100) + '%';
       $('vlearn').hidden = s.mode !== 'learn';
+      $('vtune').hidden = !(s.listening && s.mode === 'pauses' && pace());
       $('vtext').innerHTML = s.error ? `<span style="color:var(--near)">${s.error}</span>`
         : s.mode === 'learn' ? `Recite <b class="goldl">${cur().en || 'the dhikr'}</b> 3 times at your normal pace, then tap Done${s.segments ? ` · heard ${s.segments} part${s.segments > 1 ? 's' : ''}` : ''}`
         : s.mode === 'words' ? `Listening for <b class="goldl">${cur().en || 'the dhikr'}</b>${s.heard ? ` · <span class="ar dim">${s.heard}</span>` : ''}`
-        : pace() ? (s.speaking ? 'Hearing you…' : `Listening · counts after each full recitation (~${pace()} s)`)
+        : pace() ? (s.speaking ? 'Hearing you…' : `Listening · counts after each full recitation (~${pace()} s) and a pause`)
         : s.speaking ? 'Hearing you…' : 'Listening — pause briefly after each one';
     },
   });
   voice.gapMs = get('voiceGap', 300);
+  // gently follow your speed as you go (only for a learned pace)
+  voice.onPace = secs => {
+    const idx = curIdx(), v = st.paces[idx];
+    if (!v || typeof v !== 'object') return;
+    v.pace = Math.round((v.pace * 0.8 + secs * 0.2) * 10) / 10; save();
+  };
   onLeave(() => voice.stop());
 
   $('vdone').onclick = () => {
-    const secs = voice.finishLearn(3);
-    if (!secs) { toast('Didn\'t hear enough — try again a little closer to the phone'); return; }
-    st.paces[curIdx()] = secs; save();
-    toast(`Got it — about ${secs} s per ${cur().en || 'repetition'}. Starting to count…`);
+    const r = voice.finishLearn(3);
+    if (!r) { toast('Didn\'t hear enough — try again a little closer to the phone'); return; }
+    st.paces[curIdx()] = { pace: r.pace, gap: r.gap, ratio: Math.max(0.7, Math.round((r.late - 0.08) * 100) / 100), late: r.late, parts: r.parts }; save();
+    toast(`Got it — ${r.pace} s per recitation in ${r.parts} part${r.parts > 1 ? 's' : ''}. Counting…`, 4000);
     voice.start('pauses');
   };
+  $('vearly').onclick = () => nudge(-1);
+  $('vlate').onclick = () => nudge(1);
   $('vcancel').onclick = () => voice.stop();
 
   $('clisten').onclick = () => {
@@ -850,7 +880,7 @@ function counter() {
     const freeCount = t.ar === '';
     const canWords = canRecognise && !freeCount && KEYWORDS[idx];
     const mode = canWords ? get('voiceMode', 'words') : 'pauses';
-    const learned = st.paces[idx];
+    const tu = tuneOf(idx), learned = tu.learned;
     sheet('Listen & count', `
       <p class="note" style="margin-top:0">Say the dhikr out loud — Noor counts for you. Keep the phone near you.</p>
       ${canWords ? `<button class="srow vopt ${mode === 'words' ? 'on' : ''}" style="width:100%" data-vm="words">
@@ -860,13 +890,13 @@ function counter() {
           ? 'Counts one after each full recitation, using your pace — breaths in the middle aren\'t counted. Works offline.'
           : 'Counts one each time you stop briefly. Works offline, any dhikr.'}</span></span></button>
       <div class="vopt" style="margin-top:4px">
-        <div class="row"><span style="flex:1"><b>Your pace</b><br><span class="small dim">${learned ? `${learned} s per recitation (learned)` : t.long ? `Not learned yet — using ~${t.pace} s` : 'Not needed for short dhikr'}</span></span>
+        <div class="row"><span style="flex:1"><b>Your pace</b><br><span class="small dim">${learned ? `${tu.pace} s per recitation${tu.parts > 1 ? ` · ${tu.parts} parts` : ''} · counts after the last part and a pause` : t.long ? `Not learned yet — using ~${t.pace} s` : 'Not needed for short dhikr'}</span></span>
           <button class="pill" data-learn="1">${learned ? 'Re-learn' : 'Learn'}</button></div>
         ${learned ? '<button class="tiny muted" data-forget="1" style="margin-top:6px">Forget my pace</button>' : ''}
       </div>
       <div class="label" style="margin:14px 0 6px">Pause after each repetition</div>
       <div class="seg">${[[200, 'Short'], [300, 'Normal'], [500, 'Long']].map(([v, l]) => `<button data-gap="${v}" class="${voice.gapMs === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-      <p class="tiny muted">${t.long ? 'For Swalath Nariya, tap Learn once and recite it 3 times — counting is then much more accurate. ' : 'Use "Short" if you recite quickly. '}Sounds are muted while listening.</p>`,
+      <p class="tiny muted">${t.long ? 'Tap Learn and recite it 3 times the way you normally do — with the group if you recite together, and with your usual pause after each. While listening, "Counted too early / Too late" fine-tune it. ' : 'Use "Short" if you recite quickly. '}Sounds are muted while listening.</p>`,
     (e, close) => {
       const g = e.target.closest('[data-gap]');
       if (g) {
