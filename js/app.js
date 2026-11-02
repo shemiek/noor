@@ -1,7 +1,7 @@
 // Noor — screens and navigation.
 import { get, set, settings, favourites, putFile, getFile, IQAMA_DEFAULTS } from './store.js';
 import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS } from './prayer.js';
-import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH } from './data.js';
+import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH, TASBIH_ORDER, TARGET_CHOICES } from './data.js';
 import { player, play, toggle, next, stop, resetRatib, playAyah, nextAyah, prevAyah, setSpeed } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
 import { VoiceCounter, KEYWORDS, canRecognise, canListen } from './voice.js';
@@ -742,50 +742,68 @@ function pickRatib() {
 // ================= Counter =================
 
 function counter() {
-  const st = Object.assign({ index: -1, step: 0, count: 0, round: 1, total: 0, sound: false }, get('tasbih', {}));
+  const st = Object.assign({ index: -1, step: 0, count: 0, round: 1, total: 0, sound: false, targets: {}, paces: {} }, get('tasbih', {}));
+  st.targets = st.targets || {}; st.paces = st.paces || {};
   const save = () => set('tasbih', st);
-  const cur = () => st.index < 0 ? TASBIH[[0, 1, 2][Math.min(st.step, 2)]] : TASBIH[st.index];
+  const curIdx = () => st.index < 0 ? [0, 1, 2][Math.min(st.step, 2)] : st.index;
+  const cur = () => TASBIH[curIdx()] || TASBIH[0];
+  const target = () => st.index < 0 ? cur().target : (st.targets[st.index] ?? cur().target);
+  // seconds per repetition: learned, or a sensible default for long dhikr (0 = short dhikr)
+  const pace = () => st.paces[curIdx()] || (cur().long ? cur().pace : 0);
 
   view.innerHTML = `<div id="counter">
-    <button id="cname" style="text-align:center"></button>
+    <button id="cname" style="text-align:center;max-width:92vw"></button>
+    <div class="ar longtext" id="ltext" hidden></div>
     <div class="ring"><svg viewBox="0 0 270 270"><circle cx="135" cy="135" r="125" fill="none" style="stroke:var(--stroke)" stroke-width="10"/>
       <circle id="arc" cx="135" cy="135" r="125" fill="none" style="stroke:var(--gold);transition:stroke-dashoffset .2s" stroke-width="10" stroke-linecap="round" stroke-dasharray="785.4" stroke-dashoffset="785.4"/></svg>
-      <div class="big"><div class="cnt" id="cnt">0</div><div class="cap" id="cap"></div></div></div>
+      <div class="big"><div class="cnt" id="cnt">0</div><button class="cap" id="cap"></button></div></div>
     <div class="row">
       <button class="pill" id="cminus">−1</button>
       <button class="pill" id="creset">${ICON.reset} Reset</button>
       <button class="pill" id="csound"></button>
     </div>
     <button class="pill listen" id="clisten">🎙 Listen &amp; count</button>
-    <div class="vstate" id="vstate" hidden><div class="vlevel"><i id="vlevel"></i></div><div class="small" id="vtext"></div></div>
+    <div class="vstate" id="vstate" hidden>
+      <div class="vlevel"><i id="vlevel"></i></div>
+      <div class="vrep" id="vrepbox" hidden><i id="vrep"></i></div>
+      <div class="small" id="vtext"></div>
+      <div class="row" id="vlearn" hidden style="justify-content:center;margin-top:8px">
+        <button class="pill on" id="vdone">Done — I said it 3 times</button><button class="pill" id="vcancel">Cancel</button></div>
+    </div>
     <div class="tiny muted" id="ctotal"></div></div>`;
   const $ = id => document.getElementById(id);
 
   const draw = () => {
-    const t = cur();
-    $('cname').innerHTML = t.ar ? `<div class="ar goldl" style="font-size:36px;line-height:1.5">${t.ar}</div><div class="dim small">${t.en} ⌄</div>`
+    const t = cur(), tg = target();
+    $('counter').classList.toggle('long', !!t.long);
+    $('ltext').hidden = !t.long;
+    if (t.long) { $('ltext').textContent = t.ar; $('ltext').classList.toggle('folded', !!get('foldLong', false)); }
+    $('cname').innerHTML = t.long
+      ? `<div class="ar goldl" style="font-size:30px;line-height:1.4">${t.short}</div><div class="dim small">${t.en} ⌄</div>`
+      : t.ar ? `<div class="ar goldl" style="font-size:36px;line-height:1.5">${t.ar}</div><div class="dim small">${t.en} ⌄</div>`
       : `<div style="font-size:26px;font-weight:300" class="goldl">Free count</div><div class="dim small">tap to choose ⌄</div>`;
     $('cnt').textContent = st.count;
-    $('cnt').style.color = t.target && st.count >= t.target ? 'var(--gold-light)' : 'var(--silver)';
-    let cap = st.index < 0 ? `STEP ${st.step + 1} OF 3 · TARGET ${t.target}` : t.target ? `TARGET ${t.target}` : 'NO TARGET';
+    $('cnt').style.color = tg && st.count >= tg ? 'var(--gold-light)' : 'var(--silver)';
+    let cap = st.index < 0 ? `STEP ${st.step + 1} OF 3 · TARGET ${tg}` : tg ? `TARGET ${tg.toLocaleString()} ⌄` : 'NO TARGET ⌄';
     if (st.round > 1) cap += ` · ROUND ${st.round}`;
     $('cap').textContent = cap;
-    $('arc').style.strokeDashoffset = t.target ? 785.4 * (1 - Math.min(1, st.count / t.target)) : 785.4;
+    $('arc').style.strokeDashoffset = tg ? 785.4 * (1 - Math.min(1, st.count / tg)) : 785.4;
     $('csound').textContent = st.sound ? '🔔 Sound on' : '🔕 Sound off';
-    $('ctotal').textContent = `Tap anywhere to count · Total ${st.total}`;
+    $('ctotal').textContent = `Tap anywhere to count · Total ${st.total.toLocaleString()}`;
   };
   draw();
 
   const add = () => {
-    const t = cur();
-    if (t.target && st.count >= t.target) {
+    const tg = target();
+    if (tg && st.count >= tg) {
       if (st.index < 0 && st.step < 2) st.step++; else { st.round++; if (st.index < 0) st.step = 0; }
       st.count = 0;
     }
     st.count++; st.total++;
-    const hit = cur().target && st.count === cur().target;
+    const hit = target() && st.count === target();
     if (voice.active) {                         // no sounds while listening (the mic would hear them)
-      if (hit) { $('counter').classList.add('flash'); setTimeout(() => $('counter')?.classList.remove('flash'), 600); }
+      $('counter').classList.add(hit ? 'flash' : 'tick');
+      setTimeout(() => $('counter')?.classList.remove('flash', 'tick'), hit ? 700 : 250);
       if (navigator.vibrate) navigator.vibrate(hit ? [60, 60, 60] : 15);
     } else if (st.sound || hit) beep(hit);
     save(); draw();
@@ -793,7 +811,8 @@ function counter() {
 
   // ----- hands-free: listen and count -----
   const voice = new VoiceCounter({
-    keyword: () => KEYWORDS[st.index < 0 ? [0, 1, 2][Math.min(st.step, 2)] : st.index],
+    index: curIdx,
+    pace,
     onCount: k => { for (let i = 0; i < k; i++) add(); },
     onState: s => {
       if (!$('vstate')) return;
@@ -801,28 +820,53 @@ function counter() {
       $('clisten').classList.toggle('on', !!s.listening);
       $('clisten').innerHTML = s.listening ? '■ Stop listening' : '🎙 Listen &amp; count';
       if (s.level != null) $('vlevel').style.width = Math.round(s.level * 100) + '%';
-      $('vlevel').parentElement.hidden = s.mode !== 'pauses';
+      $('vlevel').parentElement.hidden = s.mode === 'words';
+      $('vrepbox').hidden = !(s.mode === 'pauses' && pace());
+      if (s.rep != null) $('vrep').style.width = Math.round(s.rep * 100) + '%';
+      $('vlearn').hidden = s.mode !== 'learn';
       $('vtext').innerHTML = s.error ? `<span style="color:var(--near)">${s.error}</span>`
+        : s.mode === 'learn' ? `Recite <b class="goldl">${cur().en || 'the dhikr'}</b> 3 times at your normal pace, then tap Done${s.segments ? ` · heard ${s.segments} part${s.segments > 1 ? 's' : ''}` : ''}`
         : s.mode === 'words' ? `Listening for <b class="goldl">${cur().en || 'the dhikr'}</b>${s.heard ? ` · <span class="ar dim">${s.heard}</span>` : ''}`
+        : pace() ? (s.speaking ? 'Hearing you…' : `Listening · counts after each full recitation (~${pace()} s)`)
         : s.speaking ? 'Hearing you…' : 'Listening — pause briefly after each one';
     },
   });
   voice.gapMs = get('voiceGap', 300);
   onLeave(() => voice.stop());
+
+  $('vdone').onclick = () => {
+    const secs = voice.finishLearn(3);
+    if (!secs) { toast('Didn\'t hear enough — try again a little closer to the phone'); return; }
+    st.paces[curIdx()] = secs; save();
+    toast(`Got it — about ${secs} s per ${cur().en || 'repetition'}. Starting to count…`);
+    voice.start('pauses');
+  };
+  $('vcancel').onclick = () => voice.stop();
+
   $('clisten').onclick = () => {
     if (voice.active) { voice.stop(); return; }
     if (!canListen && !canRecognise) { toast('This device can\'t listen from a web page'); return; }
-    const freeCount = cur().ar === '';
-    const mode = get('voiceMode', canRecognise ? 'words' : 'pauses');
+    const t = cur(), idx = curIdx();
+    const freeCount = t.ar === '';
+    const canWords = canRecognise && !freeCount && KEYWORDS[idx];
+    const mode = canWords ? get('voiceMode', 'words') : 'pauses';
+    const learned = st.paces[idx];
     sheet('Listen & count', `
       <p class="note" style="margin-top:0">Say the dhikr out loud — Noor counts for you. Keep the phone near you.</p>
-      ${canRecognise && !freeCount ? `<button class="srow vopt ${mode === 'words' ? 'on' : ''}" style="width:100%" data-vm="words">
-        <span style="flex:1;text-align:left"><b>Recognise the words</b><br><span class="small dim">Hears "${cur().en}" itself. Arabic, needs internet.</span></span></button>` : ''}
-      <button class="srow vopt ${mode === 'pauses' || freeCount || !canRecognise ? 'on' : ''}" style="width:100%" data-vm="pauses">
-        <span style="flex:1;text-align:left"><b>Count each pause</b><br><span class="small dim">Counts one each time you stop briefly. Works offline, any dhikr.</span></span></button>
-      <div class="label" style="margin:14px 0 6px">Pause between repetitions</div>
+      ${canWords ? `<button class="srow vopt ${mode === 'words' ? 'on' : ''}" style="width:100%" data-vm="words">
+        <span style="flex:1;text-align:left"><b>Recognise the words</b><br><span class="small dim">Hears "${t.en}" itself. Arabic, needs internet.</span></span></button>` : ''}
+      <button class="srow vopt ${mode === 'pauses' ? 'on' : ''}" style="width:100%" data-vm="pauses">
+        <span style="flex:1;text-align:left"><b>Count each ${t.long ? 'recitation' : 'pause'}</b><br><span class="small dim">${t.long
+          ? 'Counts one after each full recitation, using your pace — breaths in the middle aren\'t counted. Works offline.'
+          : 'Counts one each time you stop briefly. Works offline, any dhikr.'}</span></span></button>
+      <div class="vopt" style="margin-top:4px">
+        <div class="row"><span style="flex:1"><b>Your pace</b><br><span class="small dim">${learned ? `${learned} s per recitation (learned)` : t.long ? `Not learned yet — using ~${t.pace} s` : 'Not needed for short dhikr'}</span></span>
+          <button class="pill" data-learn="1">${learned ? 'Re-learn' : 'Learn'}</button></div>
+        ${learned ? '<button class="tiny muted" data-forget="1" style="margin-top:6px">Forget my pace</button>' : ''}
+      </div>
+      <div class="label" style="margin:14px 0 6px">Pause after each repetition</div>
       <div class="seg">${[[200, 'Short'], [300, 'Normal'], [500, 'Long']].map(([v, l]) => `<button data-gap="${v}" class="${voice.gapMs === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-      <p class="tiny muted">Use "Short" if you recite quickly. Sounds are muted while listening.</p>`,
+      <p class="tiny muted">${t.long ? 'For Swalath Nariya, tap Learn once and recite it 3 times — counting is then much more accurate. ' : 'Use "Short" if you recite quickly. '}Sounds are muted while listening.</p>`,
     (e, close) => {
       const g = e.target.closest('[data-gap]');
       if (g) {
@@ -830,23 +874,45 @@ function counter() {
         g.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === g));
         return;
       }
+      if (e.target.closest('[data-learn]')) { close(); voice.learn(); return; }
+      if (e.target.closest('[data-forget]')) { delete st.paces[idx]; save(); close(); toast('Pace forgotten'); return; }
       const m = e.target.closest('[data-vm]'); if (!m) return;
-      set('voiceMode', m.dataset.vm);
+      if (m.dataset.vm === 'words') set('voiceMode', 'words'); else if (canWords) set('voiceMode', 'pauses');
       close();
       voice.start(m.dataset.vm);
     });
   };
+
   const box = $('counter');
-  box.addEventListener('click', e => { if (!e.target.closest('button')) add(); });
-  $('cminus').onclick = () => { if (st.count > 0) st.count--; save(); draw(); };
+  box.addEventListener('click', e => {
+    if (e.target.closest('#ltext')) { set('foldLong', !get('foldLong', false)); draw(); return; }   // fold / unfold the long text
+    if (!e.target.closest('button')) add();
+  });
+  $('cminus').onclick = () => { if (st.count > 0) { st.count--; st.total = Math.max(0, st.total - 1); } save(); draw(); };
   $('creset').onclick = () => { st.count = 0; st.step = 0; st.round = 1; save(); draw(); };
   $('csound').onclick = () => { st.sound = !st.sound; save(); draw(); };
+  $('cap').onclick = () => {
+    if (st.index < 0) { toast('The after-prayer tasbih is 33 · 33 · 34'); return; }
+    const tg = target();
+    sheet(`Target for ${cur().en || 'free count'}`,
+      `<div class="themes">${TARGET_CHOICES.map(n => `<button class="theme ${n === tg ? 'on' : ''}" data-t="${n}" style="padding:14px 0;font-size:16px">${n.toLocaleString()}</button>`).join('')}
+        <button class="theme ${!tg ? 'on' : ''}" data-t="0" style="padding:14px 0;font-size:14px">No target</button>
+        <button class="theme" data-t="custom" style="padding:14px 0;font-size:14px">Other…</button></div>`,
+      (e, close) => {
+        const b = e.target.closest('[data-t]'); if (!b) return;
+        let n = b.dataset.t === 'custom' ? parseInt(prompt('Target count', String(tg || 100)), 10) : +b.dataset.t;
+        if (isNaN(n) || n < 0) return;
+        st.targets[st.index] = n; save(); draw(); close();
+      });
+  };
   $('cname').onclick = () => sheet('Choose dhikr',
     `<button class="srow" style="width:100%" data-i="-1">After-prayer tasbih (33 · 33 · 34)</button>` +
-    TASBIH.map((t, k) => `<button class="srow" style="width:100%" data-i="${k}"><span style="flex:1;text-align:left">${t.ar ? t.en : 'Free count (no target)'}</span>
-      ${t.ar ? `<span class="ar goldl" style="font-size:20px">${t.ar}</span>` : ''}${t.target ? `<span class="muted small">×${t.target}</span>` : ''}</button>`).join(''),
+    TASBIH_ORDER.map(k => { const t = TASBIH[k]; const tg = st.targets[k] ?? t.target;
+      return `<button class="srow" style="width:100%" data-i="${k}"><span style="flex:1;text-align:left">${t.ar ? t.en : 'Free count (no target)'}</span>
+      ${t.ar ? `<span class="ar goldl" style="font-size:20px">${t.short || t.ar}</span>` : ''}${tg ? `<span class="muted small">×${tg.toLocaleString()}</span>` : ''}</button>`; }).join(''),
     (e, close) => {
       const b = e.target.closest('[data-i]'); if (!b) return;
+      voice.stop();
       Object.assign(st, { index: +b.dataset.i, step: 0, count: 0, round: 1 }); save(); draw(); close();
     });
 }

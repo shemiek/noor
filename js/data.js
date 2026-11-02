@@ -126,4 +126,10 @@ export const TASBIH = [
   { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', en: 'SubhanAllahi wa bihamdihi', target: 100 },
   { ar: 'اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ', en: 'Salawat', target: 100 },
   { ar: '', en: 'Free count', target: 0 },
+  // Swalath Nariya (as-Salat an-Nariyah / at-Tafrijiyyah) — long: counted by learned pace
+  { ar: 'اللَّهُمَّ صَلِّ صَلَاةً كَامِلَةً وَسَلِّمْ سَلَامًا تَامًّا عَلَى سَيِّدِنَا مُحَمَّدٍ الَّذِي تَنْحَلُّ بِهِ الْعُقَدُ، وَتَنْفَرِجُ بِهِ الْكُرَبُ، وَتُقْضَى بِهِ الْحَوَائِجُ، وَتُنَالُ بِهِ الرَّغَائِبُ وَحُسْنُ الْخَوَاتِيمِ، وَيُسْتَسْقَى الْغَمَامُ بِوَجْهِهِ الْكَرِيمِ، وَعَلَى آلِهِ وَصَحْبِهِ فِي كُلِّ لَمْحَةٍ وَنَفَسٍ بِعَدَدِ كُلِّ مَعْلُومٍ لَكَ',
+    short: 'الصلاة النارية', en: 'Swalath Nariya', target: 4444, long: true, pace: 12 },
 ];
+// Display order in the picker (indices into TASBIH; new items are added at the end so saved choices stay valid)
+export const TASBIH_ORDER = [0, 1, 2, 3, 4, 5, 6, 8, 7];
+export const TARGET_CHOICES = [7, 11, 33, 41, 100, 313, 1000, 4444];
