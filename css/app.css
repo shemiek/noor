@@ -170,10 +170,36 @@ body.full #toast { bottom: calc(var(--safe-bottom) + 90px); }
 .ring .cap { font-size: 11.5px; letter-spacing: 1.2px; color: var(--gold); margin-top: 8px; font-weight: 600; }
 
 /* ---------- qibla ---------- */
-.dial { position: relative; width: 280px; height: 280px; margin: 26px auto; }
-.dial .face, .dial .arrow { position: absolute; inset: 0; transition: transform .25s ease-out; }
-.dial .kaaba { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px; background: var(--muted); border-radius: 3px; }
-.dial.ok .kaaba { background: var(--gold-light); }
+:root { --ok: #3ddc84; --near: #f0b54a; --qc: var(--stroke); }
+:root[data-theme="paper"] { --ok: #1e8e3e; --near: #c77700; }
+body[data-qibla="near"] { --qc: var(--near); }
+body[data-qibla="ok"] { --qc: var(--ok); }
+.qguide { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: var(--card); border: 1.5px solid var(--qc); transition: border-color .3s, background .3s; }
+body[data-qibla="ok"] .qguide { background: color-mix(in srgb, var(--ok) 16%, var(--card)); }
+.qturn { width: 44px; text-align: center; color: var(--qc); }
+.qturn .big { font-size: 36px; line-height: 1; font-weight: 700; }
+.qtext #qmain { font-size: 18px; font-weight: 600; }
+body[data-qibla="ok"] #qmain { color: var(--ok); }
+.qdial { position: relative; width: min(300px, 82vw); aspect-ratio: 1; margin: 18px auto 8px; }
+.qdial svg { width: 100%; height: 100%; overflow: visible; }
+.qring { fill: var(--card); stroke: var(--qc); stroke-width: 3; transition: stroke .3s, fill .3s; }
+body[data-qibla="ok"] .qring { fill: color-mix(in srgb, var(--ok) 14%, var(--card)); }
+body[data-qibla="ok"] .qdial { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--ok) 55%, transparent)); }
+.qarc { fill: none; stroke: var(--near); stroke-width: 7; stroke-linecap: round; opacity: .85; }
+.qrot { transform-origin: 150px 150px; transition: transform .15s linear; }
+.qline { stroke: var(--gold); stroke-width: 3; stroke-linecap: round; opacity: .8; }
+body[data-qibla="ok"] .qline { stroke: var(--ok); opacity: 1; }
+.qpointer { fill: var(--qc); transition: fill .3s; }
+.qhub { fill: var(--bg); stroke: var(--stroke); stroke-width: 1; }
+.qcenter { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.qdeg { font-size: 34px; font-weight: 300; line-height: 1; }
+.qlab { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); margin-top: 4px; }
+body[data-qibla="ok"] .qdeg, body[data-qibla="ok"] .qlab { color: var(--ok); }
+.qmapwrap { position: relative; width: min(300px, 82vw); aspect-ratio: 1; margin: 18px auto 0; border-radius: 50%; overflow: hidden; border: 3px solid var(--qc); background: var(--card); transition: border-color .3s; }
+body[data-qibla="ok"] .qmapwrap { box-shadow: 0 0 22px color-mix(in srgb, var(--ok) 55%, transparent); }
+#qmap { position: absolute; left: 50%; top: 50%; width: 142%; height: 142%; transform: translate(-50%, -50%); transition: transform .15s linear; background: var(--card); }
+.qaim { position: absolute; left: 50%; top: 4%; bottom: 50%; width: 0; border-left: 2px dashed var(--silver); opacity: .75; pointer-events: none; }
+.qme { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px; border-radius: 50%; background: #3b82f6; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(59,130,246,.25); pointer-events: none; }
 
 /* ---------- settings ---------- */
 .set { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }

@@ -97,6 +97,10 @@ export class AutoScroller {
 
 /** Short click / chime for the counter (iPhones don't allow vibration from web pages). */
 let actx;
+/** Call from a tap so iPhone allows the sound to play later. */
+beep.prime = () => {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch { /* no audio */ }
+};
 export function beep(strong = false) {
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();

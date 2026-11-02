@@ -1,5 +1,5 @@
 // Offline support: keeps the app and the whole Quran text on the phone.
-const VERSION = 'noor-v2';
+const VERSION = 'noor-v3';
 const FILES = [
 "./",
 "index.html",
@@ -18,6 +18,8 @@ const FILES = [
 "icons/icon-512.png",
 "data/adhkar/morning_evening.json",
 "data/adhkar/ratib.json",
+"vendor/leaflet/leaflet.js",
+"vendor/leaflet/leaflet.css",
 "data/quran/surah_001.json",
 "data/quran/surah_002.json",
 "data/quran/surah_003.json",

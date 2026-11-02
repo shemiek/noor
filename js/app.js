@@ -130,62 +130,175 @@ function todayHtml(now) {
 
 // ================= Qibla =================
 
+let qiblaMode = get('qiblaMode', 'compass');   // 'compass' or 'map'
+
 function qiblaScreen() {
   const q = qibla(settings.lat, settings.lon);
   const ticks = Array.from({ length: 72 }, (_, k) => {
-    const major = k % 18 === 0;
-    return `<line x1="140" y1="${major ? 10 : 14}" x2="140" y2="${major ? 26 : 22}" style="stroke:var(${major ? '--silver' : '--stroke'})" stroke-width="${major ? 2 : 1}" transform="rotate(${k * 5} 140 140)"/>`;
+    const major = k % 18 === 0, mid = k % 6 === 0;
+    return `<line x1="150" y1="${major ? 14 : 18}" x2="150" y2="${major ? 30 : mid ? 27 : 24}" style="stroke:var(${major ? '--silver' : '--stroke'})" stroke-width="${major ? 2 : 1.2}" transform="rotate(${k * 5} 150 150)"/>`;
   }).join('');
   const letters = ['N', 'E', 'S', 'W'].map((s, k) =>
-    `<text x="140" y="48" text-anchor="middle" font-size="15" font-weight="600" style="fill:var(${s === 'N' ? '--gold' : '--dim'})" transform="rotate(${k * 90} 140 140)">${s}</text>`).join('');
-  view.innerHTML = `
-    <div class="row"><a class="iconbtn" href="#/today">${ICON.back}</a><h1 style="margin:0">Qibla</h1></div>
-    <div style="text-align:center;margin-top:8px">
-      <div class="ar goldl" style="font-size:34px;direction:rtl">القبلة</div>
-      <div class="dim small">${Math.round(q.bearing)}° from north · ${Math.round(q.km).toLocaleString()} km to Makkah</div>
-    </div>
-    <div class="dial" id="dial">
-      <svg class="face" id="face" viewBox="0 0 280 280"><circle cx="140" cy="140" r="138" fill="none" style="stroke:var(--stroke)" stroke-width="1.5"/>${ticks}${letters}</svg>
-      <svg class="arrow" id="arrow" viewBox="0 0 280 280" style="transform:rotate(${q.bearing}deg)">
-        <path d="M140 30 L158 78 L140 68 L122 78 Z" style="fill:var(--gold)"/><line x1="140" y1="68" x2="140" y2="118" style="stroke:var(--gold)" stroke-width="3"/></svg>
-      <div class="kaaba"></div>
-    </div>
-    <p id="qmsg" style="text-align:center">Tap the button, then hold your phone flat.</p>
-    <div style="text-align:center"><button class="pill" id="start">${ICON.compass} Start compass</button></div>
-    <p class="note" style="text-align:center">If it looks wrong, move the phone in a figure-8 to calibrate. Without the compass, the gold arrow shows the direction relative to north.</p>`;
+    `<g transform="rotate(${k * 90} 150 150)"><text class="qletter" data-k="${k}" x="150" y="50" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(${s === 'N' ? '--gold' : '--dim'})" transform="rotate(${-k * 90} 150 45)">${s}</text></g>`).join('');
+  const kaabaIcon = (x, y, s) => `<g transform="translate(${x - s / 2} ${y - s / 2})"><rect width="${s}" height="${s}" rx="2" style="fill:#151515;stroke:var(--gold)" stroke-width="1.5"/><rect y="${s * 0.28}" width="${s}" height="${s * 0.16}" style="fill:var(--gold)"/></g>`;
 
-  const face = document.getElementById('face'), arrow = document.getElementById('arrow');
-  const dial = document.getElementById('dial'), msg = document.getElementById('qmsg');
-  let wasOk = false;
-  const onOrient = e => {
-    let heading = e.webkitCompassHeading;
-    if (heading == null && e.absolute && e.alpha != null) heading = 360 - e.alpha;
-    if (heading == null) return;
-    face.style.transform = `rotate(${-heading}deg)`;
-    const rot = q.bearing - heading;
-    arrow.style.transform = `rotate(${rot}deg)`;
-    const diff = Math.abs(((rot % 360) + 540) % 360 - 180);
-    const ok = diff < 4;
-    dial.classList.toggle('ok', ok);
-    msg.innerHTML = ok ? '<b class="goldl">You are facing the Qibla</b>' : 'Turn until the gold arrow points straight up';
-    if (ok && !wasOk) beep(true);
-    wasOk = ok;
+  view.innerHTML = `
+    <div class="row"><a class="iconbtn" href="#/today">${ICON.back}</a><h1 style="margin:0;flex:1">Qibla</h1>
+      <span class="dim small">${Math.round(q.bearing)}° · ${Math.round(q.km).toLocaleString()} km</span></div>
+    <div class="seg" style="margin-top:10px"><button data-qm="compass" class="${qiblaMode === 'compass' ? 'on' : ''}">Compass</button><button data-qm="map" class="${qiblaMode === 'map' ? 'on' : ''}">Map</button></div>
+
+    <div class="qguide" id="qguide">
+      <div class="qturn" id="qturn"></div>
+      <div class="qtext"><div id="qmain">Tap Start, then hold your phone flat</div><div class="small dim" id="qsub">Point the top of your phone forward</div></div>
+    </div>
+
+    <div id="qcompass" ${qiblaMode === 'compass' ? '' : 'hidden'}>
+      <div class="qdial" id="qdial">
+        <svg viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="146" class="qring"/>
+          <path id="qarc" class="qarc" d=""/>
+          <g id="qface" class="qrot">${ticks}${letters}
+            <g transform="rotate(${q.bearing} 150 150)"><line x1="150" y1="40" x2="150" y2="96" class="qline"/>${kaabaIcon(150, 40, 20)}</g>
+          </g>
+          <path d="M150 2 L162 22 L138 22 Z" class="qpointer"/>
+          <circle cx="150" cy="150" r="54" class="qhub"/>
+        </svg>
+        <div class="qcenter"><div class="qdeg" id="qdeg">${Math.round(q.bearing)}°</div><div class="qlab" id="qlab">from north</div></div>
+      </div>
+    </div>
+
+    <div id="qmapbox" ${qiblaMode === 'map' ? '' : 'hidden'}>
+      <div class="qmapwrap" id="qmapwrap"><div id="qmap"></div><div class="qaim"></div><div class="qme"></div></div>
+      <div class="row" style="justify-content:center;margin-top:10px">
+        <button class="pill" id="zout">−</button><button class="pill" id="zin">+</button>
+      </div>
+      <p class="tiny muted" style="text-align:center">Line to the Kaaba · map © OpenStreetMap contributors © CARTO</p>
+    </div>
+
+    <div style="text-align:center;margin-top:6px"><button class="pill" id="start">${ICON.compass} Start compass</button></div>
+    <p class="note" style="text-align:center" id="qnote">Hold the phone flat, away from metal and magnets. If the direction jumps, move the phone in a figure-8 to calibrate.</p>`;
+
+  const $ = id => document.getElementById(id);
+  let heading = null, unwrapped = null, found = false, lastFound = false, map = null, line = null, zoom = 16;
+
+  // ----- map (loaded only when opened) -----
+  const geodesic = (lat1, lon1, lat2, lon2, n = 64) => {
+    const r = Math.PI / 180, toV = (la, lo) => [Math.cos(la * r) * Math.cos(lo * r), Math.cos(la * r) * Math.sin(lo * r), Math.sin(la * r)];
+    const a = toV(lat1, lon1), b = toV(lat2, lon2);
+    const w = Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
+    return Array.from({ length: n + 1 }, (_, i) => {
+      const f = i / n, s1 = Math.sin((1 - f) * w) / Math.sin(w), s2 = Math.sin(f * w) / Math.sin(w);
+      const v = [s1 * a[0] + s2 * b[0], s1 * a[1] + s2 * b[1], s1 * a[2] + s2 * b[2]];
+      return [Math.atan2(v[2], Math.hypot(v[0], v[1])) / r, Math.atan2(v[1], v[0]) / r];
+    });
   };
-  document.getElementById('start').onclick = async () => {
+  const loadLeaflet = () => new Promise((resolve, reject) => {
+    if (window.L) return resolve(window.L);
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'vendor/leaflet/leaflet.css'; document.head.appendChild(css);
+    const s = document.createElement('script'); s.src = 'vendor/leaflet/leaflet.js'; s.onload = () => resolve(window.L); s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  const showMap = async () => {
+    if (map) { map.invalidateSize(); return; }
+    try {
+      const L = await loadLeaflet();
+      if (!$('qmap')) return;
+      const paper = document.documentElement.dataset.theme === 'paper';
+      map = L.map('qmap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false,
+        doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false, zoomSnap: 1 })
+        .setView([settings.lat, settings.lon], zoom);
+      L.tileLayer(`https://{s}.basemaps.cartocdn.com/${paper ? 'rastertiles/voyager' : 'dark_all'}/{z}/{x}/{y}{r}.png`,
+        { subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+      line = L.polyline(geodesic(settings.lat, settings.lon, 21.4225, 39.8262), { color: getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || '#c9a96e', weight: 5, opacity: 0.95 }).addTo(map);
+      L.circleMarker([21.4225, 39.8262], { radius: 7, color: '#000', weight: 2, fillColor: '#c9a96e', fillOpacity: 1 }).addTo(map);
+      update();
+    } catch { $('qmapwrap').innerHTML = '<p class="note" style="padding:40px;text-align:center">The map needs internet. The compass works offline.</p>'; }
+  };
+  $('zin').onclick = () => { zoom = Math.min(18, zoom + 1); map && map.setZoom(zoom); };
+  $('zout').onclick = () => { zoom = Math.max(3, zoom - 1); map && map.setZoom(zoom); };
+
+  view.querySelector('.seg').onclick = e => {
+    const b = e.target.closest('[data-qm]'); if (!b) return;
+    qiblaMode = b.dataset.qm; set('qiblaMode', qiblaMode);
+    view.querySelectorAll('[data-qm]').forEach(x => x.classList.toggle('on', x === b));
+    $('qcompass').hidden = qiblaMode !== 'compass';
+    $('qmapbox').hidden = qiblaMode !== 'map';
+    if (qiblaMode === 'map') showMap();
+  };
+  if (qiblaMode === 'map') showMap();
+
+  // ----- guidance -----
+  const arcPath = d => {     // arc on the ring from the top (where the phone points) to the Qibla
+    if (Math.abs(d) < 0.5) return '';
+    const r = 146, a0 = -90, a1 = -90 + d, rad = x => x * Math.PI / 180;
+    const p = a => `${150 + r * Math.cos(rad(a))} ${150 + r * Math.sin(rad(a))}`;
+    return `M ${p(a0)} A ${r} ${r} 0 ${Math.abs(d) > 180 ? 1 : 0} ${d > 0 ? 1 : 0} ${p(a1)}`;
+  };
+
+  function update() {
+    const root = $('qguide'); if (!root) return;
+    if (heading == null) {
+      $('qturn').innerHTML = '';
+      if (map) $('qmap').style.transform = 'translate(-50%,-50%)';
+      return;
+    }
+    const d = ((q.bearing - heading + 540) % 360) - 180;   // + turn right, − turn left
+    const ad = Math.abs(d);
+    found = lastFound ? ad < 6 : ad < 3;                   // a little stickiness so it doesn't flicker
+    const near = !found && ad < 20;
+    const state = found ? 'ok' : near ? 'near' : 'far';
+    document.body.dataset.qibla = state;
+
+    $('qface').style.transform = `rotate(${-unwrapped}deg)`;
+    view.querySelectorAll('.qletter').forEach(el => el.setAttribute('transform', `rotate(${unwrapped - el.dataset.k * 90} 150 45)`));   // keep N E S W upright
+    $('qarc').setAttribute('d', found ? '' : arcPath(d));
+    $('qdeg').textContent = found ? '✓' : `${Math.round(ad)}°`;
+    $('qlab').textContent = found ? 'Qibla' : d > 0 ? 'turn right' : 'turn left';
+    $('qturn').innerHTML = found ? '<span class="big">✓</span>' : `<span class="big">${d > 0 ? '↻' : '↺'}</span>`;
+    $('qmain').textContent = found ? 'You are facing the Qibla' : near ? `Almost there — ${d > 0 ? 'a little right' : 'a little left'}` : `Turn ${d > 0 ? 'right' : 'left'} ${Math.round(ad)}°`;
+    $('qsub').textContent = found ? 'Keep the phone steady' : near ? 'Turn slowly…' : `Kaaba is ${Math.round(q.bearing)}° from north`;
+    if (map) {
+      $('qmap').style.transform = `translate(-50%,-50%) rotate(${-unwrapped}deg)`;
+      line && line.setStyle({ color: getComputedStyle(document.body).getPropertyValue(found ? '--ok' : '--gold').trim() });
+    }
+    if (found && !lastFound) { beep(true); if (navigator.vibrate) navigator.vibrate(80); }
+    lastFound = found;
+  }
+
+  const onOrient = e => {
+    let h = e.webkitCompassHeading;
+    if (h == null && e.absolute && e.alpha != null) h = 360 - e.alpha;
+    if (h == null || isNaN(h)) return;
+    // smooth the jitter, and keep the angle continuous so the dial never spins the long way round
+    if (unwrapped == null) unwrapped = h;
+    else unwrapped += (((h - unwrapped) % 360 + 540) % 360 - 180) * 0.3;
+    heading = ((unwrapped % 360) + 360) % 360;
+    const acc = e.webkitCompassAccuracy;
+    $('qnote').textContent = acc != null && (acc < 0 || acc > 25)
+      ? '⚠︎ Compass needs calibrating — move the phone in a figure-8 a few times.'
+      : 'Hold the phone flat, away from metal and magnets.';
+    update();
+  };
+
+  $('start').onclick = async () => {
+    beep.prime && beep.prime();
     try {
       if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
         const r = await DeviceOrientationEvent.requestPermission();
-        if (r !== 'granted') { msg.textContent = 'Compass permission was declined.'; return; }
+        if (r !== 'granted') { $('qmain').textContent = 'Compass permission was declined'; $('qsub').textContent = 'Close Noor and open it again to be asked again.'; return; }
       }
       window.addEventListener('deviceorientation', onOrient, true);
       window.addEventListener('deviceorientationabsolute', onOrient, true);
-      document.getElementById('start').hidden = true;
-      msg.textContent = 'Hold your phone flat…';
-    } catch { msg.textContent = 'Compass not available on this device.'; }
+      $('start').hidden = true;
+      $('qmain').textContent = 'Hold your phone flat…';
+      setTimeout(() => { if (heading == null && $('qmain')) { $('qmain').textContent = 'No compass found on this device'; $('qsub').textContent = `The gold Kaaba on the dial is ${Math.round(q.bearing)}° from north.`; } }, 3000);
+    } catch { $('qmain').textContent = 'Compass not available on this device'; }
   };
   onLeave(() => {
     window.removeEventListener('deviceorientation', onOrient, true);
     window.removeEventListener('deviceorientationabsolute', onOrient, true);
+    delete document.body.dataset.qibla;
+    if (map) map.remove();
   });
 }
 
