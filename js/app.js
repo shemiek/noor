@@ -5,6 +5,23 @@ import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, 
 import { player, play, toggle, next, stop, resetRatib } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
 
+// ================= themes =================
+
+const THEMES = [
+  { id: 'gold', name: 'Black & Gold', bg: '#0c0b0a', dots: ['#c9a96e', '#f1ddb0'] },
+  { id: 'emerald', name: 'Emerald', bg: '#0b1d15', dots: ['#d6b56d', '#24473a'] },
+  { id: 'midnight', name: 'Midnight', bg: '#0e1528', dots: ['#a9c1f0', '#dbe6ff'] },
+  { id: 'black', name: 'Pure Black', bg: '#000000', dots: ['#c9a96e', '#2a2620'] },
+  { id: 'paper', name: 'Mushaf Paper', bg: '#f4ecdb', dots: ['#9a6f1f', '#2b2418'] },
+];
+
+function applyTheme(id) {
+  const th = THEMES.find(x => x.id === id) || THEMES[0];
+  document.documentElement.dataset.theme = th.id;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', th.bg);
+}
+applyTheme(get('theme', 'gold'));
+
 const view = document.getElementById('view');
 let cleanups = [];
 const onLeave = fn => cleanups.push(fn);
@@ -117,10 +134,10 @@ function qiblaScreen() {
   const q = qibla(settings.lat, settings.lon);
   const ticks = Array.from({ length: 72 }, (_, k) => {
     const major = k % 18 === 0;
-    return `<line x1="140" y1="${major ? 10 : 14}" x2="140" y2="${major ? 26 : 22}" stroke="${major ? '#edeae4' : '#4a453d'}" stroke-width="${major ? 2 : 1}" transform="rotate(${k * 5} 140 140)"/>`;
+    return `<line x1="140" y1="${major ? 10 : 14}" x2="140" y2="${major ? 26 : 22}" style="stroke:var(${major ? '--silver' : '--stroke'})" stroke-width="${major ? 2 : 1}" transform="rotate(${k * 5} 140 140)"/>`;
   }).join('');
   const letters = ['N', 'E', 'S', 'W'].map((s, k) =>
-    `<text x="140" y="48" text-anchor="middle" font-size="15" font-weight="600" fill="${s === 'N' ? '#c9a96e' : '#9c968c'}" transform="rotate(${k * 90} 140 140)">${s}</text>`).join('');
+    `<text x="140" y="48" text-anchor="middle" font-size="15" font-weight="600" style="fill:var(${s === 'N' ? '--gold' : '--dim'})" transform="rotate(${k * 90} 140 140)">${s}</text>`).join('');
   view.innerHTML = `
     <div class="row"><a class="iconbtn" href="#/today">${ICON.back}</a><h1 style="margin:0">Qibla</h1></div>
     <div style="text-align:center;margin-top:8px">
@@ -128,9 +145,9 @@ function qiblaScreen() {
       <div class="dim small">${Math.round(q.bearing)}° from north · ${Math.round(q.km).toLocaleString()} km to Makkah</div>
     </div>
     <div class="dial" id="dial">
-      <svg class="face" id="face" viewBox="0 0 280 280"><circle cx="140" cy="140" r="138" fill="none" stroke="#3a3226" stroke-width="1.5"/>${ticks}${letters}</svg>
+      <svg class="face" id="face" viewBox="0 0 280 280"><circle cx="140" cy="140" r="138" fill="none" style="stroke:var(--stroke)" stroke-width="1.5"/>${ticks}${letters}</svg>
       <svg class="arrow" id="arrow" viewBox="0 0 280 280" style="transform:rotate(${q.bearing}deg)">
-        <path d="M140 30 L158 78 L140 68 L122 78 Z" fill="#c9a96e"/><line x1="140" y1="68" x2="140" y2="118" stroke="#c9a96e" stroke-width="3"/></svg>
+        <path d="M140 30 L158 78 L140 68 L122 78 Z" style="fill:var(--gold)"/><line x1="140" y1="68" x2="140" y2="118" style="stroke:var(--gold)" stroke-width="3"/></svg>
       <div class="kaaba"></div>
     </div>
     <p id="qmsg" style="text-align:center">Tap the button, then hold your phone flat.</p>
@@ -505,8 +522,8 @@ function counter() {
 
   view.innerHTML = `<div id="counter">
     <button id="cname" style="text-align:center"></button>
-    <div class="ring"><svg viewBox="0 0 270 270"><circle cx="135" cy="135" r="125" fill="none" stroke="#3a3226" stroke-width="10"/>
-      <circle id="arc" cx="135" cy="135" r="125" fill="none" stroke="#c9a96e" stroke-width="10" stroke-linecap="round" stroke-dasharray="785.4" stroke-dashoffset="785.4" style="transition:stroke-dashoffset .2s"/></svg>
+    <div class="ring"><svg viewBox="0 0 270 270"><circle cx="135" cy="135" r="125" fill="none" style="stroke:var(--stroke)" stroke-width="10"/>
+      <circle id="arc" cx="135" cy="135" r="125" fill="none" style="stroke:var(--gold);transition:stroke-dashoffset .2s" stroke-width="10" stroke-linecap="round" stroke-dasharray="785.4" stroke-dashoffset="785.4"/></svg>
       <div class="big"><div class="cnt" id="cnt">0</div><div class="cap" id="cap"></div></div></div>
     <div class="row">
       <button class="pill" id="cminus">−1</button>
@@ -568,9 +585,15 @@ function settingsScreen() {
   const signed = (v, u) => v === 0 ? '—' : (v > 0 ? '+' : '') + v + ' ' + u;
   const iq = s.iqama, off = s.offsets;
 
+  const theme = get('theme', 'gold');
   view.innerHTML = `
     <h1>Settings</h1>
-    <div class="label" style="margin:0 4px 6px">Prayer times</div>
+    <div class="label" style="margin:0 4px 6px">Theme</div>
+    <div class="card"><div class="themes">${THEMES.map(th => `
+      <button class="theme ${th.id === theme ? 'on' : ''}" data-theme-id="${th.id}">
+        <div class="sw" style="background:${th.bg}">${th.dots.map(c => `<i style="background:${c}"></i>`).join('')}</div>${th.name}</button>`).join('')}
+    </div></div>
+    <div class="label" style="margin:16px 4px 6px">Prayer times</div>
     <div class="card">
       <div class="set"><span class="lbl">Calculation</span><select id="method">${METHODS.map((m, k) => `<option value="${k}" ${k === s.method ? 'selected' : ''}>${m.name}</option>`).join('')}</select></div>
       <div class="set"><span class="lbl">Hanafi Asr (later)</span>${sw('hanafi', s.hanafi)}</div>
@@ -597,6 +620,13 @@ function settingsScreen() {
   $('friday').onchange = e => set('friday', e.target.checked);
   $('loc').onclick = () => requestLocation(true);
   view.addEventListener('click', e => {
+    const th = e.target.closest('[data-theme-id]');
+    if (th) {
+      set('theme', th.dataset.themeId);
+      applyTheme(th.dataset.themeId);
+      view.querySelectorAll('.theme').forEach(x => x.classList.toggle('on', x === th));
+      return;
+    }
     const b = e.target.closest('[data-step]'); if (!b) return;
     const id = b.dataset.step, d = +b.dataset.d;
     if (id.startsWith('iq')) {
