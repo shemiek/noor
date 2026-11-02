@@ -251,7 +251,7 @@ function qiblaScreen() {
       <div class="row" style="justify-content:center;margin-top:10px">
         <button class="pill" id="zout">−</button><button class="pill" id="zin">+</button>
       </div>
-      <p class="tiny muted" style="text-align:center">Line to the Kaaba · map © OpenStreetMap contributors © CARTO</p>
+      <p class="tiny muted" style="text-align:center">Line to the Kaaba · map © OpenStreetMap contributors · Esri</p>
     </div>
 
     <div style="text-align:center;margin-top:6px"><button class="pill" id="start">${ICON.compass} Start compass</button></div>
@@ -286,8 +286,18 @@ function qiblaScreen() {
       map = L.map('qmap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false,
         doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false, zoomSnap: 1 })
         .setView([settings.lat, settings.lon], zoom);
-      L.tileLayer(`https://{s}.basemaps.cartocdn.com/${paper ? 'rastertiles/voyager' : 'dark_all'}/{z}/{x}/{y}{r}.png`,
-        { subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+      // OpenStreetMap tiles (no key needed); darkened with a CSS filter for the dark themes
+      const cls = paper ? '' : 'darktiles';
+      const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, className: cls }).addTo(map);
+      // backup source if OpenStreetMap refuses tiles
+      let fails = 0, loaded = 0;
+      osm.on('tileload', () => { loaded++; });
+      osm.on('tileerror', () => {
+        if (++fails === 3 && !loaded && map) {
+          map.removeLayer(osm);
+          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, className: cls }).addTo(map).bringToBack();
+        }
+      });
       line = L.polyline(geodesic(settings.lat, settings.lon, 21.4225, 39.8262), { color: getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || '#c9a96e', weight: 5, opacity: 0.95 }).addTo(map);
       L.circleMarker([21.4225, 39.8262], { radius: 7, color: '#000', weight: 2, fillColor: '#c9a96e', fillOpacity: 1 }).addTo(map);
       update();
