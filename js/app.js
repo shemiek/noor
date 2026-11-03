@@ -1,6 +1,6 @@
 // Noor — screens and navigation.
 import { get, set, settings, favourites, putFile, getFile, IQAMA_DEFAULTS } from './store.js';
-import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs } from './prayer.js';
+import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs, tahajjudShortcutData } from './prayer.js';
 import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH, TASBIH_ORDER, TARGET_CHOICES } from './data.js';
 import { player, play, toggle, next, stop, resetRatib, playAyah, nextAyah, prevAyah, setSpeed } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
@@ -140,6 +140,22 @@ async function addTahajjudToCalendar() {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
   toast('Tap “Add All” to put 60 nights of Tahajjud reminders in Calendar', 5000);
+}
+
+// Tahajjud times for the iPhone Shortcut that sets a nightly timer alarm
+async function copyShortcutTimes() {
+  const data = tahajjudShortcutData(400);
+  try {
+    await navigator.clipboard.writeText(data);
+    set('tahajjudShortcutAt', Date.now());
+    toast('Copied 400 nights of Tahajjud times — paste into the Text action of your Shortcut', 5000);
+  } catch {
+    const close = sheet('Copy Tahajjud times', `<p class="small dim">Select all, copy, and paste into the Text action of your Shortcut.</p>
+      <textarea readonly style="width:100%;height:160px;font-size:12px">${data}</textarea>
+      <button class="pill" data-close style="margin-top:10px;width:100%">Done</button>`,
+      (e, c) => { if (e.target.closest('[data-close]')) { set('tahajjudShortcutAt', Date.now()); c(); } });
+    const ta = document.querySelector('.sheet textarea'); ta.focus(); ta.select();
+  }
 }
 
 // While Noor is open, chime at Tahajjud time
@@ -1025,6 +1041,7 @@ function settingsScreen() {
     <div class="card">${stepper('th', 'Reminder before Fajr', s.tahajjud + ' min')}
       <div class="set"><span class="lbl">Chime when Noor is open</span>${sw('thalert', s.tahajjudAlert)}</div>
       <div class="set"><span class="lbl">Calendar reminders<div class="tiny muted">${get('tahajjudCalAt', 0) ? 'Added ' + new Date(get('tahajjudCalAt', 0)).toLocaleDateString() + ' · add again after 2 months or if you move' : '60 nights, with an alert at Tahajjud time'}</div></span><button class="pill" id="thcal2">Add</button></div>
+      <div class="set"><span class="lbl">iPhone alarm (Shortcuts)<div class="tiny muted">${get('tahajjudShortcutAt', 0) ? 'Copied ' + new Date(get('tahajjudShortcutAt', 0)).toLocaleDateString() + ' · copy again after a year, if you move, or change settings' : 'A real alarm sound every night — copy times into your Shortcut'}</div></span><button class="pill" id="thsc">Copy</button></div>
     </div>
     <div class="label" style="margin:16px 4px 6px">Iqama — minutes after adhan</div>
     <div class="card">${names.map((n, k) => stepper('iq' + k, n, iq[k] + ' min')).join('')}</div>
@@ -1034,7 +1051,7 @@ function settingsScreen() {
     <p class="note">Set the iqama minutes to match your masjid. Fine-tune moves an adhan time by a minute or two if your local timetable differs.</p>
     <div class="label" style="margin:16px 4px 6px">About</div>
     <div class="card note" style="margin-top:0">
-      Prayer times are calculated on your phone (PrayTimes method). Noor can't send adhan notifications — iPhone doesn't allow web apps to schedule alarms, so the Tahajjud reminder is added to your Calendar instead.<br><br>
+      Prayer times are calculated on your phone (PrayTimes method). Noor can't send adhan notifications — iPhone doesn't allow web apps to schedule alarms, so the Tahajjud reminder goes through Calendar, or an iPhone Shortcut that sets a timer alarm each night.<br><br>
       Quran text: Quran.com Uthmani tajweed text (react-native-quran-tajweed, MIT). Font: Scheherazade New (SIL OFL).
       Adhkar: Hisn al-Muslim (morning-evening-adhkar-data, CC BY 4.0). Ratib: wird-al-sakran-data (CC BY 4.0).
       Recitations: Islamic Network CDN (alquran.cloud). Addresses: © OpenStreetMap contributors (Nominatim).<br><br>Your settings, favourites and counts are stored only on this iPhone.
@@ -1046,6 +1063,7 @@ function settingsScreen() {
   $('friday').onchange = e => set('friday', e.target.checked);
   $('thalert').onchange = e => set('tahajjudAlert', e.target.checked);
   $('thcal2').onclick = addTahajjudToCalendar;
+  $('thsc').onclick = copyShortcutTimes;
   $('loc').onclick = () => requestLocation(true);
   view.addEventListener('click', e => {
     const th = e.target.closest('[data-theme-id]');

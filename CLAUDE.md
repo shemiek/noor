@@ -6,7 +6,7 @@ The car head-unit Android app is a separate project (repo `shemiek/drive-dashboa
 
 ## Stack
 - Vanilla JS ES modules, no build step. Serve the folder as-is. Everything that's on `main` is published by GitHub Pages; check that the Actions run finishes with `gh api "repos/shemiek/noor/actions/runs?per_page=1"`.
-- `sw.js`: cache-first precache. **Bump `VERSION` (currently `noor-v9`) every time you change files**, or iPhones keep the old version. Tell the user to close and reopen the app to update.
+- `sw.js`: cache-first precache. **Bump `VERSION` (currently `noor-v10`) every time you change files**, or iPhones keep the old version. Tell the user to close and reopen the app to update.
 - Storage: localStorage under the `noor.` prefix (js/store.js), and IndexedDB for the user's Ratib audio file.
 - No outside libraries except Leaflet 1.9.4, which is bundled in vendor/leaflet.
 
@@ -25,7 +25,7 @@ The car head-unit Android app is a separate project (repo `shemiek/drive-dashboa
 - `js/ui.js`, `css/app.css`: themes are set with `data-theme` (gold, emerald, midnight, black, paper).
 
 ## iPhone limits to remember
-- Web apps can't schedule notifications or alarms. Reminders go through a Calendar `.ics` file instead.
+- Web apps can't schedule notifications or alarms. Reminders go through a Calendar `.ics` file, or the Shortcuts alarm: Settings → Tahajjud → "Copy" puts `{"yyyy-MM-dd": minutes from 21:00 that evening to Tahajjud}` on the clipboard; the user's Shortcut (personal automation at 9:00 PM) looks up today's date and runs Start Timer for that many minutes. Keep that format and the 21:00 base (`SHORTCUT_HOUR`) stable.
 - No vibration.
 - Sound needs a tap first (`beep.prime`).
 - Compass needs a permission tap.

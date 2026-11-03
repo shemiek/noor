@@ -81,6 +81,21 @@ export function prayerDay(date = new Date()) {
   return { start, adhan, iqama, isFriday, tahajjud, lastThird };
 }
 
+/** For the iPhone Shortcut alarm: {"yyyy-MM-dd" (the evening): minutes from 21:00 that evening to Tahajjud}. */
+export const SHORTCUT_HOUR = 21;
+export function tahajjudShortcutData(nights = 400) {
+  const pad = n => String(n).padStart(2, '0');
+  const out = {};
+  const base = new Date();
+  for (let k = 0; k < nights; k++) {
+    const eve = new Date(base.getFullYear(), base.getMonth(), base.getDate() + k, SHORTCUT_HOUR);
+    const day = prayerDay(new Date(eve.getFullYear(), eve.getMonth(), eve.getDate() + 1, 12));
+    const mins = Math.round((day.tahajjud - eve) / 60000);
+    if (mins > 0) out[`${eve.getFullYear()}-${pad(eve.getMonth() + 1)}-${pad(eve.getDate())}`] = mins;
+  }
+  return JSON.stringify(out);
+}
+
 /** Calendar file with a Tahajjud event + alert for each of the next `days` nights. */
 export function tahajjudIcs(days = 60) {
   const pad = n => String(n).padStart(2, '0');
