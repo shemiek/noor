@@ -129,7 +129,29 @@ export const TASBIH = [
   // Swalath Nariya (as-Salat an-Nariyah / at-Tafrijiyyah) — long: counted by learned pace
   { ar: 'اللَّهُمَّ صَلِّ صَلَاةً كَامِلَةً وَسَلِّمْ سَلَامًا تَامًّا عَلَى سَيِّدِنَا مُحَمَّدٍ الَّذِي تَنْحَلُّ بِهِ الْعُقَدُ، وَتَنْفَرِجُ بِهِ الْكُرَبُ، وَتُقْضَى بِهِ الْحَوَائِجُ، وَتُنَالُ بِهِ الرَّغَائِبُ وَحُسْنُ الْخَوَاتِيمِ، وَيُسْتَسْقَى الْغَمَامُ بِوَجْهِهِ الْكَرِيمِ، وَعَلَى آلِهِ وَصَحْبِهِ فِي كُلِّ لَمْحَةٍ وَنَفَسٍ بِعَدَدِ كُلِّ مَعْلُومٍ لَكَ',
     short: 'الصلاة النارية', en: 'Swalath Nariya', target: 4444, long: true, pace: 12 },
+  // 9–19: added Nov 2026 (only append — indices are saved on the phone)
+  { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ', short: 'سبحان الله العظيم',
+    en: 'SubhanAllahi wa bihamdihi, SubhanAllahil Azim', target: 100, long: true, pace: 4, src: 'Bukhari 6406' },
+  { ar: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', en: 'La hawla wa la quwwata illa billah', target: 100, src: 'Bukhari 4205' },
+  { ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ', short: 'لا إله إلا الله وحده',
+    en: 'La ilaha illallahu wahdahu la sharika lah…', target: 100, long: true, pace: 8, src: 'Bukhari 3293' },
+  { ar: 'أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ', en: 'Astaghfirullaha wa atubu ilayh', target: 100, src: 'Bukhari 6307, Muslim 2702' },
+  { ar: 'سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَٰهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ', short: 'الباقيات الصالحات',
+    en: 'SubhanAllah, walhamdulillah, wa la ilaha illallah, wallahu akbar', target: 100, long: true, pace: 5, src: 'Muslim 2137' },
+  { ar: 'لَا إِلَٰهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ', short: 'دعاء يونس',
+    en: 'Dua of Yunus (AS)', target: 100, src: 'Quran 21:87, Tirmidhi 3505' },
+  { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ', short: 'عدد خلقه',
+    en: 'SubhanAllahi wa bihamdihi, adada khalqihi…', target: 3, long: true, pace: 8, src: 'Muslim 2726' },
+  { ar: 'حَسْبِيَ اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ، عَلَيْهِ تَوَكَّلْتُ، وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ', short: 'حسبي الله',
+    en: 'Hasbiyallahu la ilaha illa huwa…', target: 7, long: true, pace: 6, src: 'Quran 9:129, Abu Dawud 5081' },
+  { ar: 'رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ، إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ', short: 'رب اغفر لي وتب علي',
+    en: 'Rabbighfir li wa tub alayya…', target: 100, long: true, pace: 5, src: 'Abu Dawud 1516' },
+  { ar: 'يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ', short: 'يا حي يا قيوم',
+    en: 'Ya Hayyu ya Qayyum, bi rahmatika astaghith', target: 100, src: 'Tirmidhi 3524' },
+  { ar: 'اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ، ' +
+      'اللَّهُمَّ بَارِكْ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ',
+    short: 'الصلاة الإبراهيمية', en: 'Swalath Ibrahimiyya', target: 100, long: true, pace: 15, src: 'Bukhari 3370' },
 ];
 // Display order in the picker (indices into TASBIH; new items are added at the end so saved choices stay valid)
-export const TASBIH_ORDER = [0, 1, 2, 3, 4, 5, 6, 8, 7];
+export const TASBIH_ORDER = [0, 1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 8, 7];
 export const TARGET_CHOICES = [7, 11, 33, 41, 100, 313, 1000, 4444];

@@ -26,6 +26,17 @@ export const KEYWORDS = {
   5: [/سبحان/g],
   6: [/محمد/g],
   8: [/معلوم/g, /تنحل|العقد/g, /الغمام/g],   // Swalath Nariya: one count per repetition
+  9: [/العظيم/g],
+  10: [/قوه/g],
+  11: [/قدير/g],
+  12: [/اتوب/g],
+  13: [/اكبر/g],
+  14: [/الظالمين/g],
+  15: [/كلماته/g],
+  16: [/العرش/g],
+  17: [/التواب/g],
+  18: [/استغيث/g],
+  19: [/صليت/g, /باركت/g],                   // Swalath Ibrahimiyya
 };
 
 export class VoiceCounter {
