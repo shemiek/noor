@@ -1,5 +1,6 @@
 // Offline prayer-time calculation (the astronomical method used by PrayTimes.org).
 import { settings } from './store.js';
+import { crescentNights } from './moon.js';
 
 export const METHODS = [
   { name: 'UAE (Awqaf)', fajr: 18.2, isha: 18.2, ishaMin: 0 },
@@ -115,6 +116,16 @@ export function tahajjudIcs(days = 60) {
   lines.push('END:VCALENDAR');
   return lines.join('\r\n');
 }
+
+/** Maghrib (sunset) of a calendar day. */
+export const sunsetOf = d => prayerDay(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12)).adhan[4];
+
+export const crescentWords = (n, future = false) => {
+  const h = Math.floor(n.ageHours), m = Math.round((n.ageHours % 1) * 60);
+  const sets = n.lagMin == null ? 'stays up well after the Sun'
+    : n.lagMin >= 0 ? `sets ${n.lagMin} min after the Sun` : `sets ${-n.lagMin} min before the Sun`;
+  return `At sunset the Moon ${future ? 'will be' : 'is'} ${h} h ${m} m old and ${sets.replace('sets', future ? 'will set' : 'sets')}.`;
+};
 
 export function prayerName(day, i) {
   return ['Fajr', 'Sunrise', day.isFriday ? "Jumu'ah" : 'Dhuhr', 'Asr', 'Maghrib', 'Isha'][i];

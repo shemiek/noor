@@ -1,10 +1,10 @@
 // Noor — screens and navigation.
 import { get, set, settings, favourites, putFile, getFile, IQAMA_DEFAULTS } from './store.js';
-import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs, tahajjudShortcutData } from './prayer.js';
+import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs, tahajjudShortcutData, crescentWords, sunsetOf } from './prayer.js';
 import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH, TASBIH_ORDER, TARGET_CHOICES } from './data.js';
 import { player, play, toggle, next, stop, resetRatib, playAyah, nextAyah, prevAyah, setSpeed } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
-import { moonInfo, moonSvg, moonRiseSet, nextPhases, atSunset, PHASE_ICON } from './moon.js';
+import { moonInfo, moonSvg, moonRiseSet, nextPhases, atSunset, crescentNights, PHASE_ICON } from './moon.js';
 import { VoiceCounter, KEYWORDS, canRecognise, canListen } from './voice.js';
 
 // ================= themes =================
@@ -115,7 +115,7 @@ function today() {
     ${standalone ? '' : `<div class="card" style="margin-top:14px"><div class="label gold">Install</div>
       <p class="note" style="margin:6px 0 0">Tap <b>Share</b> <span class="gold">⬆︎</span> in Safari, then <b>Add to Home Screen</b>. Noor then opens like an app and works offline.</p></div>`}`;
   const draw = () => { const d = document.getElementById('dyn'); if (d) d.innerHTML = todayHtml(new Date()); };
-  view.addEventListener('click', e => { if (e.target.closest('#thcal')) addTahajjudToCalendar(); if (e.target.closest('#moonbtn')) openMoonSheet(); });
+  view.addEventListener('click', e => { if (e.target.closest('#thcal')) addTahajjudToCalendar(); if (e.target.closest('#moonbtn, [data-moon]')) openMoonSheet(); });
   draw();
   const timer = setInterval(draw, 1000);
   onLeave(() => clearInterval(timer));
@@ -130,16 +130,19 @@ function today() {
 }
 
 /** iPhone web apps can't schedule notifications, so the reminder goes into the Calendar app. */
-async function addTahajjudToCalendar() {
-  const ics = tahajjudIcs(60);
-  const file = new File([ics], 'tahajjud.ics', { type: 'text/calendar' });
-  set('tahajjudCalAt', Date.now());
+function downloadIcs(name, ics) {
+  const file = new File([ics], name, { type: 'text/calendar' });
   // Safari opens a .ics file with "Add All" to Calendar
   const url = URL.createObjectURL(file);
   const a = document.createElement('a');
-  a.href = url; a.download = 'tahajjud.ics';
+  a.href = url; a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+async function addTahajjudToCalendar() {
+  set('tahajjudCalAt', Date.now());
+  downloadIcs('tahajjud.ics', tahajjudIcs(60));
   toast('Tap “Add All” to put 60 nights of Tahajjud reminders in Calendar', 5000);
 }
 
@@ -163,6 +166,15 @@ const fmtIn = ms => {
   return d ? `${d}d ${h}h` : `${h}h ${m % 60}m`;
 };
 const fmtDay = d => d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }) + ', ' + fmtTime(d);
+
+let nightCache = { key: '', v: null };
+function nextCrescent(now) {                 // tonight's crescent night until 3 h after sunset, then the next one
+  const key = settings.lat + ',' + settings.lon;
+  const n = nightCache.v;
+  if (nightCache.key !== key || !n || now.getTime() > n.sunset.getTime() + 3 * 3600000)
+    nightCache = { key, v: crescentNights(now, 1, settings.lat, settings.lon, sunsetOf)[0] };
+  return nightCache.v;
+}
 
 function openMoonSheet() {
   const now = new Date(), { lat, lon } = settings;
@@ -252,6 +264,8 @@ function todayHtml(now) {
       <div class="iq">${settings.tahajjud} min before Fajr · last third ${fmtTime(day.lastThird)}</div></div>
     </div>`;
   const moon = moonNow(now);
+  const night = nextCrescent(now), tonight = night.sunset.toDateString() === now.toDateString();
+  const crescentCard = `<div class="card crescent" data-moon="1"><div class="row"><span class="gold" style="font-weight:600">🌙 ${tonight ? 'Crescent night tonight' : 'Next crescent night'}</span><span class="spacer"></span><span class="dim small">${tonight ? 'Sunset ' + fmtTime(night.sunset) : 'in ' + fmtIn(night.sunset - now)}</span></div><div class="dim small" style="margin-top:6px">${tonight ? '' : night.sunset.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }) + ' · sunset ' + fmtTime(night.sunset) + '. '}${crescentWords(night, !tonight)} Tap for details.</div></div>`;
   return `
     <div style="margin:6px 0 14px;display:flex;gap:12px;align-items:flex-start">
       <div style="flex:1;min-width:0">
@@ -267,6 +281,7 @@ function todayHtml(now) {
         <div class="moon-more">Details ›</div>
       </button>
     </div>
+    ${crescentCard}
     <div class="card hi">
       <div class="label gold">${cur ? 'Now' : 'Next prayer'}</div>
       <div class="row" style="align-items:baseline;margin-top:4px">

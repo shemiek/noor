@@ -134,6 +134,24 @@ export function atSunset(sunset, lat, lon) {
   return { ageHours: age, lagMin: set ? Math.round((set - sunset) / 60000) : null, upAtSunset };
 }
 
+/** Upcoming crescent nights: the first sunset after each new moon. `sunsetOf(day)` must return that day's sunset (Date). */
+export function crescentNights(from, count, lat, lon, sunsetOf) {
+  const out = [];
+  let jd = toJD(from.getTime()) - 1.5;                         // also catches a new moon just before `from`
+  for (let guard = 0; guard < count + 3 && out.length < count; guard++) {
+    const c = crossing(jd, 0, 1);
+    if (c == null) break;
+    const conj = fromJD(c);
+    let day = new Date(conj.getFullYear(), conj.getMonth(), conj.getDate()), sunset = sunsetOf(day);
+    if (sunset <= conj) { day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1); sunset = sunsetOf(day); }
+    jd = c + 20;
+    if (sunset.getTime() + 3 * 3600000 < from.getTime()) continue;   // already over
+    const set = scan(sunset.getTime() - 4 * 3600000, sunset.getTime() + 5 * 3600000, lat, lon, false);
+    out.push({ conj, sunset, ageHours: (sunset - conj) / 3600000, lagMin: set ? Math.round((set - sunset) / 60000) : null });
+  }
+  return out;
+}
+
 /** SVG of the Moon with the lit part drawn from the real phase. Waxing is lit on the right in the north, on the left in the south. */
 export function moonSvg({ k, waxing }, { size = 56, lat = 25, id = 'm' } = {}) {
   const r = 46, c = 50;
