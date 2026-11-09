@@ -142,6 +142,14 @@ async function addTahajjudToCalendar() {
   toast('Tap “Add All” to put 60 nights of Tahajjud reminders in Calendar', 5000);
 }
 
+// Live clock on Today: hours:minutes large, seconds and AM/PM smaller (follows the phone's 12/24-hour setting)
+function clockHtml(d) {
+  const parts = new Intl.DateTimeFormat([], { hour: 'numeric', minute: '2-digit', second: '2-digit' }).formatToParts(d);
+  const v = t => parts.find(p => p.type === t)?.value || '';
+  const ap = v('dayPeriod');
+  return `${v('hour')}:${v('minute')}<span class="sec">:${v('second')}</span>${ap ? `<span class="ap">${ap}</span>` : ''}`;
+}
+
 // Tahajjud times for the iPhone Shortcut that sets a nightly timer alarm
 async function copyShortcutTimes() {
   const data = tahajjudShortcutData(400);
@@ -201,7 +209,7 @@ function todayHtml(now) {
     </div>`;
   return `
     <div style="margin:6px 0 14px">
-      <div class="hijri-ar ar" style="text-align:left">${h.ar}</div>
+      <div class="clock">${clockHtml(now)}</div>
       <div class="gold">${h.en}</div>
       <div class="dim small">${now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}</div>
       <button class="locline" data-loc="1">${ICON.pin}<span><span class="l1">${addressLines()[0]}</span><span class="l2">${addressLines()[1]}</span></span></button>

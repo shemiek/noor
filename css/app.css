@@ -95,7 +95,9 @@ h1 { font-weight: 300; font-size: 28px; margin: 6px 0 14px; }
 body.full #toast { bottom: calc(var(--safe-bottom) + 90px); }
 
 /* ---------- today ---------- */
-.hijri-ar { font-size: 32px; color: var(--gold-light); line-height: 1.6; }
+.clock { font-size: 46px; font-weight: 300; color: var(--gold-light); line-height: 1.15; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+.clock .sec { font-size: 22px; color: var(--gold); margin-left: 1px; }
+.clock .ap { font-size: 18px; color: var(--dim); margin-left: 8px; letter-spacing: 0; text-transform: uppercase; }
 .next-name { font-size: 34px; font-weight: 300; }
 .next-time { font-size: 32px; font-weight: 200; }
 .times .t { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
