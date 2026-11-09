@@ -1,6 +1,6 @@
 // Noor — screens and navigation.
 import { get, set, settings, favourites, putFile, getFile, IQAMA_DEFAULTS } from './store.js';
-import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs, tahajjudShortcutData } from './prayer.js';
+import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs, tahajjudShortcutData, moonPhase } from './prayer.js';
 import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH, TASBIH_ORDER, TARGET_CHOICES } from './data.js';
 import { player, play, toggle, next, stop, resetRatib, playAyah, nextAyah, prevAyah, setSpeed } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
@@ -208,12 +208,20 @@ function todayHtml(now) {
       <div><div class="v">${fmtTime(day.tahajjud)}</div>
       <div class="iq">${settings.tahajjud} min before Fajr · last third ${fmtTime(day.lastThird)}</div></div>
     </div>`;
+  const moon = moonPhase(now);
   return `
-    <div style="margin:6px 0 14px">
-      <div class="clock">${clockHtml(now)}</div>
-      <div class="gold">${h.en}</div>
-      <div class="dim small">${now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}</div>
-      <button class="locline" data-loc="1">${ICON.pin}<span><span class="l1">${addressLines()[0]}</span><span class="l2">${addressLines()[1]}</span></span></button>
+    <div style="margin:6px 0 14px;display:flex;gap:12px;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <div class="clock">${clockHtml(now)}</div>
+        <div class="gold">${h.en}</div>
+        <div class="dim small">${now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+        <button class="locline" data-loc="1">${ICON.pin}<span><span class="l1">${addressLines()[0]}</span><span class="l2">${addressLines()[1]}</span></span></button>
+      </div>
+      <div class="moon" title="Moon phase">
+        <div class="moon-icon">${moon.icon}</div>
+        <div class="moon-name">${moon.name}</div>
+        <div class="moon-lit">${moon.lit}% lit</div>
+      </div>
     </div>
     <div class="card hi">
       <div class="label gold">${cur ? 'Now' : 'Next prayer'}</div>

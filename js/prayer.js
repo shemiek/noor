@@ -148,6 +148,20 @@ const H_MONTHS_AR = ['محرم', 'صفر', 'ربيع الأول', 'ربيع ال
 export const arabicDigits = n => String(n).replace(/\d/g, c => '٠١٢٣٤٥٦٧٨٩'[c]);
 
 /** Hijri date (Umm al-Qura calendar) in Arabic and English. */
+/** Moon phase from the mean synodic month (no network needed). Accurate to about a day. */
+export function moonPhase(date = new Date()) {
+  const L = 29.530588853;                                   // synodic month, days
+  const jd = date.getTime() / 86400000 + 2440587.5;         // Julian day
+  const age = ((jd - 2451550.1) % L + L) % L;               // days since new moon (6 Jan 2000)
+  const lit = Math.round((1 - Math.cos(2 * Math.PI * age / L)) / 2 * 100);
+  const phases = [[1.84566, '🌑', 'New moon'], [5.53699, '🌒', 'Waxing crescent'], [9.22831, '🌓', 'First quarter'],
+    [12.91963, '🌔', 'Waxing gibbous'], [16.61096, '🌕', 'Full moon'], [20.30228, '🌖', 'Waning gibbous'],
+    [23.99361, '🌗', 'Last quarter'], [27.68493, '🌘', 'Waning crescent']];
+  const hit = phases.find(([end]) => age < end);
+  const [, icon, name] = hit || [0, '🌑', 'New moon'];
+  return { icon, name, lit, age };
+}
+
 export function hijri(date = new Date()) {
   const d = new Date(date.getTime() + settings.hijriOffset * 86400000);
   try {
