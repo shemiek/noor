@@ -1,10 +1,10 @@
 // Noor — screens and navigation.
 import { get, set, settings, favourites, putFile, getFile, IQAMA_DEFAULTS } from './store.js';
-import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs, tahajjudShortcutData, moonPhase } from './prayer.js';
+import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer, hijri, qibla, PRAYERS, tahajjudIcs, tahajjudShortcutData } from './prayer.js';
 import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH, TASBIH_ORDER, TARGET_CHOICES } from './data.js';
 import { player, play, toggle, next, stop, resetRatib, playAyah, nextAyah, prevAyah, setSpeed } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
-import { DUA_SECTIONS } from './duas.js';
+import { moonInfo, moonSvg, moonRiseSet, nextPhases, atSunset, PHASE_ICON } from './moon.js';
 import { VoiceCounter, KEYWORDS, canRecognise, canListen } from './voice.js';
 
 // ================= themes =================
@@ -43,7 +43,7 @@ function route() {
   const tab = { qibla: 'today', read: 'quran' }[page] || page;
   document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
   window.scrollTo(0, 0);
-  const screens = { today, qibla: qiblaScreen, quran, read: reader, adhkar: adhkarScreen, dua: duaScreen, counter, settings: settingsScreen };
+  const screens = { today, qibla: qiblaScreen, quran, read: reader, adhkar: adhkarScreen, counter, settings: settingsScreen };
   (screens[page] || today)(parts.slice(1));
   renderMini();
 }
@@ -115,7 +115,7 @@ function today() {
     ${standalone ? '' : `<div class="card" style="margin-top:14px"><div class="label gold">Install</div>
       <p class="note" style="margin:6px 0 0">Tap <b>Share</b> <span class="gold">⬆︎</span> in Safari, then <b>Add to Home Screen</b>. Noor then opens like an app and works offline.</p></div>`}`;
   const draw = () => { const d = document.getElementById('dyn'); if (d) d.innerHTML = todayHtml(new Date()); };
-  view.addEventListener('click', e => { if (e.target.closest('#thcal')) addTahajjudToCalendar(); });
+  view.addEventListener('click', e => { if (e.target.closest('#thcal')) addTahajjudToCalendar(); if (e.target.closest('#moonbtn')) openMoonSheet(); });
   draw();
   const timer = setInterval(draw, 1000);
   onLeave(() => clearInterval(timer));
@@ -149,6 +149,49 @@ function clockHtml(d) {
   const v = t => parts.find(p => p.type === t)?.value || '';
   const ap = v('dayPeriod');
   return `${v('hour')}:${v('minute')}<span class="sec">:${v('second')}</span>${ap ? `<span class="ap">${ap}</span>` : ''}`;
+}
+
+// ----- Moon: card on Today, details in a sheet -----
+let moonCache = { key: -1, v: null };
+function moonNow(now) {                       // Today redraws every second; the Moon only needs a refresh each minute
+  const key = Math.floor(now.getTime() / 60000);
+  if (moonCache.key !== key) moonCache = { key, v: moonInfo(now) };
+  return moonCache.v;
+}
+const fmtIn = ms => {
+  const m = Math.max(0, Math.round(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
+  return d ? `${d}d ${h}h` : `${h}h ${m % 60}m`;
+};
+const fmtDay = d => d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }) + ', ' + fmtTime(d);
+
+function openMoonSheet() {
+  const now = new Date(), { lat, lon } = settings;
+  const mi = moonInfo(now), rs = moonRiseSet(now, lat, lon), next = nextPhases(now);
+  const sunset = prayerDay(now).adhan[4], ss = atSunset(sunset, lat, lon);
+  const row = (a, b) => `<div class="mrow"><span>${a}</span><b>${b}</b></div>`;
+  const t = d => d ? fmtTime(d) : '—';
+  const hm = h => `${Math.floor(h)} h ${Math.round((h % 1) * 60)} m`;
+  let evening = '';
+  const newMoon = next.find(p => p.name === 'New moon').date;
+  if (ss.ageHours != null && ss.ageHours < 48) {
+    const sets = ss.lagMin == null ? (ss.upAtSunset ? 'over 5 h after the Sun' : 'before the Sun')
+      : ss.lagMin >= 0 ? `${ss.lagMin} min after the Sun` : `${-ss.lagMin} min before the Sun`;
+    evening = `<div class="label gold" style="margin:16px 0 4px">At today's sunset</div>${row('Moon age at sunset', hm(ss.ageHours))}${row('Moon sets', sets)}`;
+  } else if (newMoon - sunset > 0 && newMoon - sunset < 36 * 3600000) {
+    evening = `<div class="label gold" style="margin:16px 0 4px">At today's sunset</div>${row('New moon (conjunction)', fmtDay(newMoon))}
+      <p class="tiny muted" style="margin:6px 0 0">The new moon comes after sunset, so no new crescent is possible tonight.</p>`;
+  }
+  if (evening && !evening.includes('no new crescent')) evening += '<p class="tiny muted" style="margin:6px 0 0">Astronomy only. The start of a month follows your local moon-sighting announcement.</p>';
+  sheet('Moon', `
+    <div class="moon-big">${moonSvg(mi, { size: 132, lat, id: 'sheet' })}
+      <div class="moon-bigname">${mi.name}</div><div class="dim small">${mi.pct}% illuminated</div></div>
+    ${row('Age', `${Math.floor(mi.ageDays)} d ${Math.round((mi.ageDays % 1) * 24)} h`)}
+    ${row('Moonrise', t(rs.rise))}${row('Moonset', t(rs.set))}
+    ${row('Distance', `${mi.distKm.toLocaleString()} km`)}
+    ${evening}
+    <div class="label gold" style="margin:16px 0 4px">Next phases</div>
+    ${next.map(p => row(`${PHASE_ICON[p.name]} ${p.name}`, `${fmtDay(p.date)}<div class="tiny muted" style="font-weight:400">in ${fmtIn(p.date - now)}</div>`)).join('')}
+    <p class="tiny muted" style="margin:12px 0 0">Calculated on your phone for your location. Times are good to within a few minutes.</p>`);
 }
 
 // Tahajjud times for the iPhone Shortcut that sets a nightly timer alarm
@@ -208,7 +251,7 @@ function todayHtml(now) {
       <div><div class="v">${fmtTime(day.tahajjud)}</div>
       <div class="iq">${settings.tahajjud} min before Fajr · last third ${fmtTime(day.lastThird)}</div></div>
     </div>`;
-  const moon = moonPhase(now);
+  const moon = moonNow(now);
   return `
     <div style="margin:6px 0 14px;display:flex;gap:12px;align-items:flex-start">
       <div style="flex:1;min-width:0">
@@ -217,11 +260,12 @@ function todayHtml(now) {
         <div class="dim small">${now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}</div>
         <button class="locline" data-loc="1">${ICON.pin}<span><span class="l1">${addressLines()[0]}</span><span class="l2">${addressLines()[1]}</span></span></button>
       </div>
-      <div class="moon" title="Moon phase">
-        <div class="moon-icon">${moon.icon}</div>
+      <button class="moon" id="moonbtn" aria-label="Moon details">
+        ${moonSvg(moon, { size: 58, lat: settings.lat, id: 'card' })}
         <div class="moon-name">${moon.name}</div>
-        <div class="moon-lit">${moon.lit}% lit</div>
-      </div>
+        <div class="moon-lit">${moon.pct}% lit</div>
+        <div class="moon-more">Details ›</div>
+      </button>
     </div>
     <div class="card hi">
       <div class="label gold">${cur ? 'Now' : 'Next prayer'}</div>
@@ -238,38 +282,6 @@ function todayHtml(now) {
     </div>
     <div class="card times">${thRow}${rows}</div>
     <button class="pill" id="thcal" style="margin:10px 0 12px;width:100%">🔔 Tahajjud reminder in Calendar</button>`;
-}
-
-// ================= Dua =================
-function duaScreen() {
-  const size = get('duaSize', 24), english = get('duaEnglish', true);
-  view.innerHTML = `
-    <div class="row"><h1 style="flex:1">Dua</h1>
-      <button class="iconbtn" id="duaopt" aria-label="Options">${ICON.more}</button></div>
-    <p class="note" style="margin:0 0 14px">Praise and salawat first, then forgiveness, the duas after the tashahhud, and duas from the Quran. Tap a section to open it.</p>
-    <div id="dlist" style="--asize:${size}px">${DUA_SECTIONS.map((sec, i) => `
-      <details class="dsec" ${i === 0 ? 'open' : ''}>
-        <summary><span class="ar goldl" style="font-size:22px">${sec.ar}</span><span class="dsum">${sec.en}</span></summary>
-        ${sec.items.map(d => `<div class="card dk">
-          <div class="ar">${d.ar}</div>
-          ${english && d.en ? `<div class="en">${d.en}</div>` : ''}
-          ${d.src ? `<div class="src">${d.src}</div>` : ''}</div>`).join('')}
-      </details>`).join('')}
-    </div>`;
-  document.getElementById('duaopt').onclick = () => sheet('Options', `
-      <button class="srow" style="width:100%" data-o="en">${english ? 'Hide' : 'Show'} English meaning</button>
-      <button class="srow" style="width:100%" data-o="big">Larger text</button>
-      <button class="srow" style="width:100%" data-o="small">Smaller text</button>
-      <p class="note">Quran verses: English meanings are paraphrased. Hadith duas are shown in Arabic with their source.</p>`,
-    (e, close) => {
-      const o = e.target.closest('[data-o]'); if (!o) return;
-      close();
-      const a = o.dataset.o;
-      if (a === 'en') set('duaEnglish', !english);
-      if (a === 'big') set('duaSize', Math.min(44, size + 3));
-      if (a === 'small') set('duaSize', Math.max(18, size - 3));
-      route();
-    });
 }
 
 // ================= Qibla =================
