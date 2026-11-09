@@ -1,5 +1,5 @@
 // Offline support: keeps the app and the whole Quran text on the phone.
-const VERSION = 'noor-v17';
+const VERSION = 'noor-v18';
 const FILES = [
 "./",
 "index.html",
