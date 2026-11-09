@@ -153,6 +153,14 @@ body.full #toast { bottom: calc(var(--safe-bottom) + 90px); }
 .legend .row { padding: 7px 0; font-size: 15px; }
 .dot { width: 14px; height: 14px; border-radius: 50%; flex: none; }
 
+/* ---------- dua ---------- */
+.dsec { margin-bottom: 12px; }
+.dsec > summary { list-style: none; cursor: pointer; padding: 14px 16px; background: var(--card); border: 1px solid var(--stroke); border-radius: 14px; display: flex; flex-direction: column; gap: 4px; }
+.dsec > summary::-webkit-details-marker { display: none; }
+.dsec[open] > summary { margin-bottom: 10px; }
+.dsec .dsum { font-size: 14px; color: var(--dim); }
+.dsec .card { margin-bottom: 10px; }
+.dsec .src { font-size: 11px; color: var(--muted); margin-top: 8px; }
 /* ---------- adhkar ---------- */
 .dk { cursor: pointer; }
 .dk .ar { font-size: var(--asize, 24px); line-height: 1.85; text-align: right; color: var(--silver); }

@@ -4,6 +4,7 @@ import { METHODS, prayerDay, prayerName, prayerNameAr, nextPrayer, currentPrayer
 import { RATIB, RECITERS, reciterName, surahEn, surahAr, surahHtml, RULE_NAMES, LEGEND, KINDS, adhkar, TASBIH, TASBIH_ORDER, TARGET_CHOICES } from './data.js';
 import { player, play, toggle, next, stop, resetRatib, playAyah, nextAyah, prevAyah, setSpeed } from './audio.js';
 import { ICON, toast, sheet, fmtTime, fmtDur, SPEEDS, AutoScroller, beep } from './ui.js';
+import { DUA_SECTIONS } from './duas.js';
 import { VoiceCounter, KEYWORDS, canRecognise, canListen } from './voice.js';
 
 // ================= themes =================
@@ -42,7 +43,7 @@ function route() {
   const tab = { qibla: 'today', read: 'quran' }[page] || page;
   document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
   window.scrollTo(0, 0);
-  const screens = { today, qibla: qiblaScreen, quran, read: reader, adhkar: adhkarScreen, counter, settings: settingsScreen };
+  const screens = { today, qibla: qiblaScreen, quran, read: reader, adhkar: adhkarScreen, dua: duaScreen, counter, settings: settingsScreen };
   (screens[page] || today)(parts.slice(1));
   renderMini();
 }
@@ -229,6 +230,38 @@ function todayHtml(now) {
     </div>
     <div class="card times">${thRow}${rows}</div>
     <button class="pill" id="thcal" style="margin:10px 0 12px;width:100%">🔔 Tahajjud reminder in Calendar</button>`;
+}
+
+// ================= Dua =================
+function duaScreen() {
+  const size = get('duaSize', 24), english = get('duaEnglish', true);
+  view.innerHTML = `
+    <div class="row"><h1 style="flex:1">Dua</h1>
+      <button class="iconbtn" id="duaopt" aria-label="Options">${ICON.more}</button></div>
+    <p class="note" style="margin:0 0 14px">Praise and salawat first, then forgiveness, the duas after the tashahhud, and duas from the Quran. Tap a section to open it.</p>
+    <div id="dlist" style="--asize:${size}px">${DUA_SECTIONS.map((sec, i) => `
+      <details class="dsec" ${i === 0 ? 'open' : ''}>
+        <summary><span class="ar goldl" style="font-size:22px">${sec.ar}</span><span class="dsum">${sec.en}</span></summary>
+        ${sec.items.map(d => `<div class="card dk">
+          <div class="ar">${d.ar}</div>
+          ${english && d.en ? `<div class="en">${d.en}</div>` : ''}
+          ${d.src ? `<div class="src">${d.src}</div>` : ''}</div>`).join('')}
+      </details>`).join('')}
+    </div>`;
+  document.getElementById('duaopt').onclick = () => sheet('Options', `
+      <button class="srow" style="width:100%" data-o="en">${english ? 'Hide' : 'Show'} English meaning</button>
+      <button class="srow" style="width:100%" data-o="big">Larger text</button>
+      <button class="srow" style="width:100%" data-o="small">Smaller text</button>
+      <p class="note">Quran verses: English meanings are paraphrased. Hadith duas are shown in Arabic with their source.</p>`,
+    (e, close) => {
+      const o = e.target.closest('[data-o]'); if (!o) return;
+      close();
+      const a = o.dataset.o;
+      if (a === 'en') set('duaEnglish', !english);
+      if (a === 'big') set('duaSize', Math.min(44, size + 3));
+      if (a === 'small') set('duaSize', Math.max(18, size - 3));
+      route();
+    });
 }
 
 // ================= Qibla =================

@@ -6,7 +6,7 @@ The car head-unit Android app is a separate project (repo `shemiek/drive-dashboa
 
 ## Stack
 - Vanilla JS ES modules, no build step. Serve the folder as-is. Everything that's on `main` is published by GitHub Pages; check that the Actions run finishes with `gh api "repos/shemiek/noor/actions/runs?per_page=1"`.
-- `sw.js`: cache-first precache. **Bump `VERSION` (currently `noor-v12`) every time you change files**, or iPhones keep the old version. Tell the user to close and reopen the app to update.
+- `sw.js`: cache-first precache. **Bump `VERSION` (currently `noor-v13`) every time you change files**, or iPhones keep the old version. Tell the user to close and reopen the app to update.
 - Storage: localStorage under the `noor.` prefix (js/store.js), and IndexedDB for the user's Ratib audio file.
 - No outside libraries except Leaflet 1.9.4, which is bundled in vendor/leaflet.
 
@@ -16,6 +16,7 @@ The car head-unit Android app is a separate project (repo `shemiek/drive-dashboa
   - Qibla: compass with turn guidance, and a map.
   - Quran: reader and verse-by-verse player.
   - Adhkar: including Ratib and the travel dua.
+  - Dua: sections of duas (hamd, salawat, istighfar, after tashahhud, Quranic duas). Content is in `js/duas.js`.
   - Counter: tasbih and hands-free counting.
   - Settings: themes, prayer calculation, iqama, Tahajjud.
 - `js/prayer.js`: PrayTimes calculation, iqama, Friday khutbah at 12:45 in the UAE, Tahajjud (Fajr minus N minutes) and the `.ics` builder, Hijri date, Qibla.
